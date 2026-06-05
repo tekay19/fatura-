@@ -1140,12 +1140,9 @@ input:checked + .slider:before {
     border-top: 1px solid var(--border-color);
     padding: 2rem 1rem;
     overflow-y: visible;
-  }
-  
-  .invoice-a4-sheet {
-    width: 100%;
-    min-height: auto;
-    padding: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
   }
 }
 
@@ -1158,6 +1155,13 @@ input:checked + .slider:before {
   }
   .header-controls {
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .header-controls .btn-primary, .header-controls .btn-secondary, .header-controls select {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 120px;
+    justify-content: center;
   }
   .form-grid-2, .form-grid-3 {
     grid-template-columns: 1fr;
@@ -1169,6 +1173,33 @@ input:checked + .slider:before {
   .preview-bottom-section {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+
+  /* Responsive items table for mobile */
+  .items-form-table, .items-form-table thead, .items-form-table tbody, .items-form-table th, .items-form-table td, .items-form-table tr {
+    display: block;
+  }
+  .items-form-table thead {
+    display: none;
+  }
+  .items-form-table tr {
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    background-color: var(--bg-card);
+  }
+  .items-form-table td {
+    padding: 0.35rem 0;
+    width: 100% !important;
+  }
+  .items-form-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
   }
 }
 

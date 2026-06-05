@@ -200,6 +200,28 @@ export default function App() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const previewRef = useRef(null);
 
+  // Responsive Scale Calculations for A4 Live Preview
+  const [scale, setScale] = useState(1);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.clientWidth;
+        const padding = window.innerWidth <= 640 ? 24 : 32;
+        if (containerWidth < 794 + padding) {
+          setScale((containerWidth - padding) / 794);
+        } else {
+          setScale(1);
+        }
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Saved Invoices from LocalStorage
   const [savedInvoices, setSavedInvoices] = useState(() => {
     try {
@@ -659,14 +681,23 @@ export default function App() {
             </div>
           )}
         </div>
-        <div className="preview-pane">
-          <InvoicePreview
-            invoiceData={invoiceData}
-            t={pdfT}
-            elementRef={previewRef}
-            onPayClick={() => setShowCheckoutModal(true)}
-            lang={lang}
-          />
+        <div className="preview-pane" ref={containerRef}>
+          <div style={{
+            transform: `scale(${scale})`,
+            transformOrigin: "top center",
+            width: "794px",
+            height: "1123px",
+            marginBottom: `calc(1123px * (${scale} - 1))`,
+            flexShrink: 0
+          }}>
+            <InvoicePreview
+              invoiceData={invoiceData}
+              t={pdfT}
+              elementRef={previewRef}
+              onPayClick={() => setShowCheckoutModal(true)}
+              lang={lang}
+            />
+          </div>
         </div>
       </main>
 

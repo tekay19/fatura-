@@ -547,7 +547,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
                 const amount = (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0);
                 return (
                   <tr key={index}>
-                    <td>
+                    <td data-label={t.item}>
                       <input
                         type="text"
                         className="form-control"
@@ -557,7 +557,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
                         style={{ width: "100%" }}
                       />
                     </td>
-                    <td>
+                    <td data-label={t.quantity}>
                       <input
                         type="number"
                         className="form-control"
@@ -568,7 +568,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
                         style={{ width: "100%" }}
                       />
                     </td>
-                    <td>
+                    <td data-label={t.rate}>
                       <input
                         type="number"
                         className="form-control"
@@ -579,7 +579,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
                         style={{ width: "100%" }}
                       />
                     </td>
-                    <td>
+                    <td data-label={t.amount}>
                       <div className="item-row-amount">
                         <span>{amount.toFixed(2)}</span>
                         {invoiceData.items.length > 1 && (
