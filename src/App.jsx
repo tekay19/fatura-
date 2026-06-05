@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Download, Receipt } from "lucide-react";
+import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen } from "lucide-react";
 import { translations } from "./components/translations";
 import InvoiceForm from "./components/InvoiceForm";
 import InvoicePreview from "./components/InvoicePreview";
@@ -200,9 +200,29 @@ export default function App() {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const previewRef = useRef(null);
 
+  // Saved Invoices from LocalStorage
+  const [savedInvoices, setSavedInvoices] = useState(() => {
+    try {
+      const stored = localStorage.getItem("saved_invoices");
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error("Failed to parse saved invoices", e);
+      return [];
+    }
+  });
+
+  // Active Tab state ("edit" or "history")
+  const [activeTab, setActiveTab] = useState("edit");
+
+  // Sync saved invoices with localStorage
+  useEffect(() => {
+    localStorage.setItem("saved_invoices", JSON.stringify(savedInvoices));
+  }, [savedInvoices]);
+
   // Initialize invoice data with Turkish defaults
   const defaults = getLanguageDefaults("tr");
   const [invoiceData, setInvoiceData] = useState({
+    id: "initial-id",
     title: defaults.title,
     logo: null,
     invoiceNumber: "INV-2026-001",
@@ -310,6 +330,91 @@ export default function App() {
     });
   };
 
+  const saveCurrentInvoice = () => {
+    const invoiceId = invoiceData.id || Date.now().toString();
+    const invoiceToSave = { ...invoiceData, id: invoiceId };
+    
+    const existingIndex = savedInvoices.findIndex(
+      (inv) => inv.id === invoiceId || (inv.invoiceNumber === invoiceData.invoiceNumber && inv.invoiceNumber !== "")
+    );
+
+    let updatedList;
+    if (existingIndex > -1) {
+      updatedList = [...savedInvoices];
+      updatedList[existingIndex] = invoiceToSave;
+    } else {
+      updatedList = [invoiceToSave, ...savedInvoices];
+    }
+    
+    setSavedInvoices(updatedList);
+    setInvoiceData(invoiceToSave);
+    alert(uiT.saveSuccess);
+  };
+
+  const loadInvoice = (invoice) => {
+    setInvoiceData(invoice);
+    setActiveTab("edit");
+  };
+
+  const deleteInvoice = (id, e) => {
+    e.stopPropagation();
+    if (confirm("Bu faturayı geçmişten silmek istediğinize emin misiniz?")) {
+      const updated = savedInvoices.filter((inv) => inv.id !== id);
+      setSavedInvoices(updated);
+    }
+  };
+
+  const createNewInvoice = () => {
+    const defaults = getLanguageDefaults("tr");
+    setInvoiceData({
+      id: Date.now().toString(),
+      title: defaults.title,
+      logo: null,
+      invoiceNumber: "INV-" + new Date().getFullYear() + "-" + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+      invoiceDate: new Date().toISOString().split("T")[0],
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      paymentTerms: "30",
+      fromName: defaults.fromName,
+      fromEmail: defaults.fromEmail,
+      fromAddress: defaults.fromAddress,
+      fromWebsite: defaults.fromWebsite,
+      fromPhone: defaults.fromPhone,
+      fromVatId: defaults.fromVatId,
+      fromRegNo: defaults.fromRegNo,
+      fromTaxOffice: defaults.fromTaxOffice,
+      fromMersis: defaults.fromMersis,
+      fromJurisdiction: "",
+      fromDirector: "",
+      toName: defaults.toName,
+      toEmail: defaults.toEmail,
+      toAddress: defaults.toAddress,
+      toVatId: defaults.toVatId,
+      toRegNo: defaults.toRegNo,
+      items: [
+        { description: "WordPress Recovery Service", quantity: 1, rate: 500 }
+      ],
+      notes: defaults.notes,
+      terms: defaults.terms,
+      signature: null,
+      currency: defaults.currency,
+      discount: 0,
+      discountType: "percent",
+      tax: 20,
+      addTax: 0,
+      shipping: 0,
+      amountPaid: 300,
+      isPaid: false,
+      acceptStripe: false,
+      stripeEmail: "",
+      stripeLink: "",
+      bankName: defaults.bankName,
+      bankAccountHolder: defaults.bankAccountHolder,
+      bankIban: defaults.bankIban,
+      bankBic: defaults.bankBic
+    });
+    setActiveTab("edit");
+  };
+
   // Generate and download A4 PDF using html2pdf with exact pixel-matching dimensions
   const downloadPdf = () => {
     const element = document.getElementById("invoice-capture-area");
@@ -403,7 +508,27 @@ export default function App() {
             <option value="pt">Português (Portekizce)</option>
           </select>
 
-          {/* Theme Toggle removed - Light Mode only */}
+          {/* New Invoice Button */}
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={createNewInvoice}
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+          >
+            <Plus size={16} />
+            <span className="pdf-no-print">{uiT.newInvoice}</span>
+          </button>
+
+          {/* Save Invoice Button */}
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={saveCurrentInvoice}
+            style={{ backgroundColor: "var(--success-color)", boxShadow: "0 4px 6px -1px rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", gap: "0.5rem" }}
+          >
+            <Save size={16} />
+            <span className="pdf-no-print">{uiT.saveInvoice}</span>
+          </button>
 
           {/* Download PDF button */}
           <button
@@ -420,12 +545,120 @@ export default function App() {
 
       {/* Split screen content */}
       <main className="main-layout">
-        <InvoiceForm
-          invoiceData={invoiceData}
-          onChange={setInvoiceData}
-          t={uiT}
-          lang={lang}
-        />
+        <div className="editor-sidebar">
+          {/* Tab switcher */}
+          <div className="editor-tabs">
+            <button
+              type="button"
+              className={`editor-tab-btn ${activeTab === "edit" ? "active" : ""}`}
+              onClick={() => setActiveTab("edit")}
+            >
+              <FileText size={16} />
+              {uiT.editTab}
+            </button>
+            <button
+              type="button"
+              className={`editor-tab-btn ${activeTab === "history" ? "active" : ""}`}
+              onClick={() => setActiveTab("history")}
+            >
+              <History size={16} />
+              {uiT.historyTab} ({savedInvoices.length})
+            </button>
+          </div>
+
+          {activeTab === "edit" ? (
+            <InvoiceForm
+              invoiceData={invoiceData}
+              onChange={setInvoiceData}
+              t={uiT}
+              lang={lang}
+            />
+          ) : (
+            <div className="editor-pane">
+              <div className="history-pane">
+                {savedInvoices.length === 0 ? (
+                  <div className="history-empty">
+                    <History size={40} style={{ opacity: 0.5 }} />
+                    <div className="history-empty-title">{uiT.noInvoices}</div>
+                  </div>
+                ) : (
+                  <div className="history-list">
+                    {savedInvoices.map((inv) => {
+                      // Calculate invoice total for listing
+                      const invSubtotal = inv.items.reduce((acc, item) => {
+                        const qty = parseFloat(item.quantity) || 0;
+                        const rate = parseFloat(item.rate) || 0;
+                        return acc + (qty * rate);
+                      }, 0);
+                      
+                      const invDiscountVal = inv.discountType === "percent"
+                        ? invSubtotal * ((parseFloat(inv.discount) || 0) / 100)
+                        : (parseFloat(inv.discount) || 0);
+
+                      const invAfterDiscount = invSubtotal - invDiscountVal;
+                      const invTaxVal = invAfterDiscount * ((parseFloat(inv.tax) || 0) / 100);
+                      const invAddTaxVal = invAfterDiscount * ((parseFloat(inv.addTax) || 0) / 100);
+                      const invShippingVal = parseFloat(inv.shipping) || 0;
+                      const invTotal = invAfterDiscount + invTaxVal + invAddTaxVal + invShippingVal;
+
+                      return (
+                        <div
+                          key={inv.id}
+                          className="history-card"
+                          onClick={() => loadInvoice(inv)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <div className="history-card-header">
+                            <span className="history-card-number">
+                              {inv.invoiceNumber || "No Number"}
+                            </span>
+                            <span className={`history-card-badge ${inv.isPaid ? "paid" : "unpaid"}`}>
+                              {inv.isPaid ? uiT.paid : uiT.unpaid}
+                            </span>
+                          </div>
+                          <div className="history-card-details">
+                            <div><strong>Müşteri:</strong> {inv.toName || "Belirtilmedi"}</div>
+                            <div><strong>Tarih:</strong> {inv.invoiceDate || "Belirtilmedi"}</div>
+                          </div>
+                          <div className="history-card-total">
+                            {inv.currency === "TRY" ? "₺" : 
+                             inv.currency === "EUR" ? "€" :
+                             inv.currency === "GBP" ? "£" :
+                             inv.currency === "DKK" ? "kr." : "$"}
+                            {invTotal.toFixed(2)}
+                          </div>
+                          <div className="history-card-actions">
+                            <button
+                              type="button"
+                              className="btn-secondary"
+                              style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                loadInvoice(inv);
+                              }}
+                            >
+                              <FolderOpen size={12} />
+                              {uiT.loadInvoice}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-danger"
+                              style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}
+                              onClick={(e) => deleteInvoice(inv.id, e)}
+                            >
+                              <Trash2 size={12} />
+                              {uiT.deleteInvoice}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="preview-pane">
           <InvoicePreview
             invoiceData={invoiceData}
