@@ -317,7 +317,7 @@ export default function InvoicePreview({ invoiceData, t, elementRef, onPayClick,
               <span>{formatCurrency(total)}</span>
             </div>
 
-            {paidVal > 0 && (
+            {!isPaid && paidVal > 0 && (
               <div className="preview-total-row">
                 <span>{t.amountPaid}:</span>
                 <span>{formatCurrency(paidVal)}</span>
