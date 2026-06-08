@@ -91,8 +91,8 @@ export default function InvoicePreview({ invoiceData, t, elementRef, onPayClick,
   const shippingVal = parseFloat(shipping) || 0;
 
   const total = afterDiscount + taxVal + addTaxVal + shippingVal;
-  const paidVal = parseFloat(amountPaid) || 0;
-  const balanceDue = total - paidVal;
+  const paidVal = isPaid ? total : (parseFloat(amountPaid) || 0);
+  const balanceDue = isPaid ? 0 : (total - paidVal);
 
   // Format date helper (DD.MM.YYYY)
   const formatDateString = (dateStr) => {

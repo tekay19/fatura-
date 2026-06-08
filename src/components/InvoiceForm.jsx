@@ -685,9 +685,10 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
               id="paid-input"
               type="number"
               className="form-control"
-              value={invoiceData.amountPaid}
+              value={invoiceData.isPaid ? "" : invoiceData.amountPaid}
               onChange={(e) => handleFieldChange("amountPaid", e.target.value)}
-              placeholder="300"
+              placeholder={invoiceData.isPaid ? "Toplam Tutar" : "300"}
+              disabled={invoiceData.isPaid}
               min="0"
             />
           </div>
