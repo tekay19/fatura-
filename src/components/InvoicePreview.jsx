@@ -324,10 +324,12 @@ export default function InvoicePreview({ invoiceData, t, elementRef, onPayClick,
               </div>
             )}
 
-            <div className={`preview-total-row balance-due ${balanceDue <= 0 ? "paid-off" : ""}`}>
-              <span>{t.balanceDue}:</span>
-              <span>{formatCurrency(balanceDue)}</span>
-            </div>
+            {balanceDue > 0 && (
+              <div className="preview-total-row balance-due">
+                <span>{t.balanceDue}:</span>
+                <span>{formatCurrency(balanceDue)}</span>
+              </div>
+            )}
 
             {/* Clickable Stripe Pay Button inside Preview */}
             {!isPaid && acceptStripe && !isTurkey && (
