@@ -33,7 +33,7 @@ const AMAZON_MARKETS = {
 
 const RECEIPT_DETAIL_COPY = {
   tr: { store: "Mağaza", customerCopy: "Müşteri nüshası", register: "Kasa", order: "Sipariş", items: "Ürün sayısı", transaction: "İşlem", authCode: "Onay kodu", status: "Durum", changeDue: "Para üstü" },
-  en: { store: "Store", customerCopy: "Customer copy", register: "Reg", order: "Order", items: "Items", transaction: "Transaction", authCode: "Auth code", status: "Status", changeDue: "Change due" }
+  en: { store: "STORE", customerCopy: "Customer copy", register: "Reg:", order: "Order#", items: "Items", transaction: "Transaction", authCode: "Auth code", status: "Status", changeDue: "Change due" }
 };
 
 const randomDigits = (length) => {
@@ -59,7 +59,7 @@ const generateEan13 = (countryCode = "TR") => {
 
 const SLIP_COPY = {
   tr: { locale: "tr-TR", receiptNo: "Fiş no", date: "Tarih", cashier: "Kasa", item: "Ürün", qty: "Adet", amount: "Tutar", subtotal: "Ara toplam", discount: "İndirim", total: "Toplam", payment: "Ödeme", thankYou: "Bizi tercih ettiğiniz için teşekkür ederiz.", thankYouShopping: "Alışverişiniz için teşekkür ederiz" },
-  en: { locale: "en-US", receiptNo: "Receipt no", date: "Date", cashier: "Register", item: "Item", qty: "Qty", amount: "Amount", subtotal: "Subtotal", discount: "Discount", total: "Total", payment: "Payment", thankYou: "Thank you for choosing us.", thankYouShopping: "Thank you for shopping" },
+  en: { locale: "en-US", receiptNo: "Receipt#", date: "Date", cashier: "Cashier:", item: "Item", qty: "Qty", amount: "Amount", subtotal: "Subtotal", discount: "Discount", total: "Total", payment: "Payment", thankYou: "Thank you for choosing us.", thankYouShopping: "Thank you for shopping" },
   de: { locale: "de-DE", receiptNo: "Belegnr.", date: "Datum", cashier: "Kasse", item: "Artikel", qty: "Menge", amount: "Betrag", subtotal: "Zwischensumme", discount: "Rabatt", total: "Gesamt", payment: "Zahlung", thankYou: "Vielen Dank für Ihren Einkauf.", thankYouShopping: "Vielen Dank für Ihren Einkauf" },
   fr: { locale: "fr-FR", receiptNo: "N° ticket", date: "Date", cashier: "Caisse", item: "Article", qty: "Qté", amount: "Montant", subtotal: "Sous-total", discount: "Remise", total: "Total", payment: "Paiement", thankYou: "Merci de votre confiance.", thankYouShopping: "Merci pour votre achat" },
   it: { locale: "it-IT", receiptNo: "N. ricevuta", date: "Data", cashier: "Cassa", item: "Articolo", qty: "Qtà", amount: "Importo", subtotal: "Subtotale", discount: "Sconto", total: "Totale", payment: "Pagamento", thankYou: "Grazie per averci scelto.", thankYouShopping: "Grazie per il tuo acquisto" },
@@ -129,58 +129,58 @@ const SAMPLE_CONTENT = {
     items: ["Filtre kahve 250 g", "Organik süt 1 L", "Bez alışveriş çantası"]
   },
   en: {
-    storeAddress: "128 Bagdat Avenue, Istanbul",
-    taxNumber: "Tax No: 324 089 2018",
-    cashier: "REGISTER 03",
-    paymentMethod: "Credit Card",
+    storeAddress: "742 LONG STREET AVENUE, NEW YORK, NY 10001",
+    taxNumber: "",
+    cashier: "DANIEL",
+    paymentMethod: "VISA",
     paymentStatus: "APPROVED ✓",
     footerSecondary: "VISIT AGAIN SOON",
     footerTertiary: "HAVE A GREAT DAY!",
-    items: ["Filter coffee 250 g", "Organic milk 1 L", "Reusable shopping bag"]
+    items: ["NIKE PRO MAX ULTRA SPORT SHIRT"]
   }
 };
 
 const DEFAULT_SLIP = {
   template: "classic",
   fontStyle: "courier",
-  language: "tr",
-  country: "TR",
-  storeName: "Atlas Market",
-  storeAddress: "Bağdat Caddesi No: 128, İstanbul",
-  phone: "+90 212 555 24 80",
-  taxNumber: "Vergi No: 324 089 2018",
-  storeNumber: "8331",
+  language: "en",
+  country: "US",
+  storeName: "SAKO MARKET",
+  storeAddress: "742 LONG STREET AVENUE, NEW YORK, NY 10001",
+  phone: "+1 (555) 555-5555",
+  taxNumber: "",
+  storeNumber: "6755",
   customerCopy: "",
-  receiptNumber: "004281",
-  registerNumber: "REG-14",
-  orderNumber: "600731",
-  cashier: "KASA 03",
-  date: new Date().toISOString().split("T")[0],
-  time: "16:12",
-  paymentMethod: "Kredi Kartı",
+  receiptNumber: "14180",
+  registerNumber: "REG-11",
+  orderNumber: "421507",
+  cashier: "DANIEL",
+  date: "2026-08-07",
+  time: "17:40",
+  paymentMethod: "VISA",
   cardNetwork: "VISA",
-  cardLast4: "1550",
-  transactionNumber: "926365429",
-  authCode: "754110",
-  paymentStatus: "ONAYLANDI ✓",
+  cardLast4: "",
+  cardMask: "************",
+  transactionNumber: "765733816",
+  authCode: "998323",
+  paymentStatus: "APPROVED ✓",
   changeDue: 0,
-  barcode: "8693240892018",
-  footer: "",
-  footerSecondary: "TEKRAR BEKLERİZ",
-  footerTertiary: "İYİ GÜNLER!",
-  website: "https://example.com",
+  barcode: "7870179703801837",
+  footer: "THANK YOU FOR SHOPPING WITH US",
+  footerSecondary: "VISIT AGAIN SOON",
+  footerTertiary: "HAVE A GREAT DAY!",
+  website: "https://sakoamz.com",
   logo: null,
-  taxRate: 20,
+  taxRate: 8,
   discount: 0,
-  paperYellowing: true,
-  paperCrumple: true,
+  paperYellowing: false,
+  paperCrumple: false,
   paperStrength: "soft",
   paperEffectVersion: 2,
   languageVersion: 1,
+  classicReferenceVersion: 1,
   items: [
-    { sku: "8693240892", description: "Filtre kahve 250 g", quantity: 1, rate: 189.9 },
-    { sku: "8693240893", description: "Organik süt 1 L", quantity: 2, rate: 54.5 },
-    { sku: "8693240894", description: "Bez alışveriş çantası", quantity: 1, rate: 29.9 }
+    { sku: "8374972793", description: "NIKE PRO MAX ULTRA SPORT SHIRT", quantity: 1, rate: 12.5 }
   ]
 };
 
@@ -190,21 +190,23 @@ const readSavedSlip = () => {
     if (!savedDraft) return DEFAULT_SLIP;
 
     const saved = JSON.parse(savedDraft);
-    const legacyPaperEffect = Boolean(saved.paperTexture);
+    const source = saved.classicReferenceVersion === 1 ? saved : DEFAULT_SLIP;
+    const legacyPaperEffect = Boolean(source.paperTexture);
     return {
       ...DEFAULT_SLIP,
-      ...saved,
-      footer: saved.languageVersion === 1 ? saved.footer : "",
-      paperYellowing: saved.paperYellowing ?? legacyPaperEffect,
-      paperCrumple: saved.paperCrumple ?? legacyPaperEffect,
-      paperStrength: saved.paperEffectVersion === 2 ? saved.paperStrength : "soft",
+      ...source,
+      footer: source.languageVersion === 1 ? source.footer : DEFAULT_SLIP.footer,
+      paperYellowing: source.paperYellowing ?? legacyPaperEffect,
+      paperCrumple: source.paperCrumple ?? legacyPaperEffect,
+      paperStrength: source.paperEffectVersion === 2 ? source.paperStrength : "soft",
       paperEffectVersion: 2,
       languageVersion: 1,
-      paymentStatus: saved.paymentStatus ?? (saved.language === "tr" ? SAMPLE_CONTENT.tr.paymentStatus : SAMPLE_CONTENT.en.paymentStatus),
-      footerSecondary: saved.footerSecondary ?? (saved.language === "tr" ? SAMPLE_CONTENT.tr.footerSecondary : SAMPLE_CONTENT.en.footerSecondary),
-      footerTertiary: saved.footerTertiary ?? (saved.language === "tr" ? SAMPLE_CONTENT.tr.footerTertiary : SAMPLE_CONTENT.en.footerTertiary),
-      items: Array.isArray(saved.items)
-        ? saved.items.map((item, index) => ({ sku: DEFAULT_SLIP.items[index]?.sku || "", ...item }))
+      classicReferenceVersion: 1,
+      paymentStatus: source.paymentStatus ?? (source.language === "tr" ? SAMPLE_CONTENT.tr.paymentStatus : SAMPLE_CONTENT.en.paymentStatus),
+      footerSecondary: source.footerSecondary ?? (source.language === "tr" ? SAMPLE_CONTENT.tr.footerSecondary : SAMPLE_CONTENT.en.footerSecondary),
+      footerTertiary: source.footerTertiary ?? (source.language === "tr" ? SAMPLE_CONTENT.tr.footerTertiary : SAMPLE_CONTENT.en.footerTertiary),
+      items: Array.isArray(source.items)
+        ? source.items.map((item, index) => ({ sku: DEFAULT_SLIP.items[index]?.sku || "", ...item }))
         : DEFAULT_SLIP.items
     };
   } catch {
@@ -223,6 +225,7 @@ function ReceiptPreview({ data }) {
   const tax = taxable * ((Number(data.taxRate) || 0) / 100);
   const total = taxable + tax;
   const money = (value) => new Intl.NumberFormat(country.locale, { style: "currency", currency: country.currency }).format(value || 0);
+  const plainNumber = (value) => new Intl.NumberFormat(country.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
   const formattedDate = (() => {
     const parsedDate = new Date(`${data.date}T12:00:00`);
     return Number.isNaN(parsedDate.getTime()) ? data.date : new Intl.DateTimeFormat(copy.locale).format(parsedDate);
@@ -251,7 +254,7 @@ function ReceiptPreview({ data }) {
           <p>{data.storeAddress}</p>
           <p>{data.phone}</p>
           {data.storeNumber && <p>{detailCopy.store} #{data.storeNumber}</p>}
-          <p>{data.date || formattedDate} · {data.time}</p>
+          <p>{data.date || formattedDate}&nbsp;&nbsp;&nbsp;{data.time}</p>
           <strong className="receipt-copy-heading">{data.customerCopy || detailCopy.customerCopy}</strong>
         </header>
 
@@ -272,7 +275,7 @@ function ReceiptPreview({ data }) {
               <article className="receipt-product" key={`${item.description}-${index}`}>
                 <div className="receipt-product-code"><span>{item.sku || "—"}</span><strong>{money(rate)}</strong></div>
                 <div className="receipt-product-name">{item.description || copy.item}</div>
-                <div className="receipt-product-price"><span>{quantity} × {money(rate)}</span><strong>{money(quantity * rate)}</strong></div>
+                <div className="receipt-product-price"><span>{quantity} x {money(rate)}</span><strong>{money(quantity * rate)}</strong></div>
               </article>
             );
           })}
@@ -283,17 +286,17 @@ function ReceiptPreview({ data }) {
           <div><span>{detailCopy.items}</span><strong>{itemCount}</strong></div>
           <div><span>{copy.subtotal}</span><strong>{money(subtotal)}</strong></div>
           {discount > 0 && <div><span>{copy.discount}</span><strong>-{money(discount)}</strong></div>}
-          <div><span>{country.tax} %{data.taxRate || 0}</span><strong>{money(tax)}</strong></div>
+          <div><span>{country.tax} ({data.taxRate || 0}%)</span><strong>{money(tax)}</strong></div>
           <div className="receipt-grand-total"><span>{copy.total}</span><strong>{money(total)}</strong></div>
         </div>
 
         <div className="receipt-payment-details">
           <div><span>{copy.payment}:</span><strong>{data.paymentMethod}</strong></div>
-          <div><span>{data.cardNetwork}</span><strong>{data.cardLast4 ? `•••••••• ${data.cardLast4}` : ""}</strong></div>
+          <div><span>{data.cardNetwork}</span><strong>{data.cardMask || (data.cardLast4 ? `******** ${data.cardLast4}` : "")}</strong></div>
           <div><span>{detailCopy.transaction}:</span><strong>{data.transactionNumber}</strong></div>
           <div><span>{detailCopy.authCode}:</span><strong>{data.authCode}</strong></div>
           <div><span>{detailCopy.status}:</span><strong>{data.paymentStatus}</strong></div>
-          <div><span>{detailCopy.changeDue}:</span><strong>{money(Number(data.changeDue) || 0)}</strong></div>
+          <div><span>{detailCopy.changeDue}:</span><strong>{plainNumber(Number(data.changeDue) || 0)}</strong></div>
         </div>
 
         <ReceiptBarcode value={data.barcode} />
@@ -554,7 +557,7 @@ export default function MarketSlipApp({ onBack }) {
                 <label>{ui.discount}<input type="number" min="0" step="0.01" value={data.discount} onChange={(e) => update("discount", e.target.value)} /></label>
               </div>
               <div className="slip-input-action">
-                <label>{ui.barcode}<input inputMode="numeric" value={data.barcode} onChange={(e) => update("barcode", e.target.value.replace(/\D/g, "").slice(0, 13))} /></label>
+                <label>{ui.barcode}<input inputMode="numeric" value={data.barcode} onChange={(e) => update("barcode", e.target.value.replace(/\D/g, "").slice(0, 32))} /></label>
                 <button type="button" onClick={() => update("barcode", generateEan13(data.country))}><RefreshCw size={14} /> {ui.generate}</button>
               </div>
               <div className="slip-live-total"><span>{ui.liveTotal}</span><strong>{new Intl.NumberFormat(COUNTRIES[data.country].locale, { style: "currency", currency: COUNTRIES[data.country].currency }).format(totals)}</strong></div>
@@ -567,7 +570,7 @@ export default function MarketSlipApp({ onBack }) {
               <label>{ui.paymentMethod}<input value={data.paymentMethod} onChange={(e) => update("paymentMethod", e.target.value)} /></label>
               <div className="slip-field-row">
                 <label>{ui.cardNetwork}<input value={data.cardNetwork} onChange={(e) => update("cardNetwork", e.target.value)} /></label>
-                <label>{ui.cardLast4}<input inputMode="numeric" maxLength={4} value={data.cardLast4} onChange={(e) => update("cardLast4", e.target.value.replace(/\D/g, "").slice(0, 4))} /></label>
+                <label>{ui.cardLast4}<input inputMode="numeric" maxLength={4} value={data.cardLast4} onChange={(e) => setData((previous) => ({ ...previous, cardLast4: e.target.value.replace(/\D/g, "").slice(0, 4), cardMask: "" }))} /></label>
               </div>
               <div className="slip-field-row">
                 <label>{ui.transaction}<input value={data.transactionNumber} onChange={(e) => update("transactionNumber", e.target.value)} /></label>

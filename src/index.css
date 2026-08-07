@@ -2803,6 +2803,10 @@ input, select, textarea {
   gap: 1rem;
 }
 
+.receipt-totals span {
+  text-transform: uppercase;
+}
+
 .receipt-totals strong {
   text-align: right;
   font-variant-numeric: tabular-nums;

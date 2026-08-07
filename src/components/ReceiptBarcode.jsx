@@ -18,6 +18,12 @@ const PARITY = {
   5: "OEEOOE", 6: "OEEEOO", 7: "OEOEOE", 8: "OEOEEO", 9: "OEEOEO"
 };
 
+const CODE39_DIGITS = {
+  0: "101001101101", 1: "110100101011", 2: "101100101011", 3: "110110010101", 4: "101001101011",
+  5: "110100110101", 6: "101100110101", 7: "101001011011", 8: "110100101101", 9: "101100101101",
+  "*": "100101101101"
+};
+
 const checkDigit = (firstTwelve) => {
   const sum = firstTwelve.split("").reduce((total, digit, index) => total + Number(digit) * (index % 2 === 0 ? 1 : 3), 0);
   return String((10 - (sum % 10)) % 10);
@@ -47,18 +53,26 @@ const encodeEan13 = (value) => {
   return { digits, modules: `${modules}101` };
 };
 
+const encodeNumericCode39 = (value) => {
+  const digits = String(value || "").replace(/\D/g, "") || "7870179703801837";
+  const modules = `*${digits}*`.split("").map((digit) => CODE39_DIGITS[digit]).join("0");
+  return { digits, modules };
+};
+
 export default function ReceiptBarcode({ value }) {
-  const { digits, modules } = encodeEan13(value);
+  const numericValue = String(value || "").replace(/\D/g, "");
+  const isEan13 = numericValue.length === 13;
+  const { digits, modules } = isEan13 ? encodeEan13(numericValue) : encodeNumericCode39(numericValue);
   const guardModules = new Set([0, 2, 46, 48, 92, 94]);
 
   return (
-    <div className="receipt-barcode" aria-label={`EAN-13 barcode ${digits}`}>
-      <svg viewBox="0 0 95 58" role="img" aria-hidden="true">
+    <div className="receipt-barcode" aria-label={`Barcode ${digits}`}>
+      <svg viewBox={`0 0 ${modules.length} 58`} role="img" aria-hidden="true">
         {Array.from(modules, (module, index) => module === "1" && (
-          <rect key={index} x={index} y="0" width="1" height={guardModules.has(index) ? 54 : 47} />
+          <rect key={index} x={index} y="0" width="1" height={isEan13 && guardModules.has(index) ? 54 : 47} />
         ))}
       </svg>
-      <span>{`${digits[0]} ${digits.slice(1, 7)} ${digits.slice(7)}`}</span>
+      <span>{isEan13 ? `${digits[0]} ${digits.slice(1, 7)} ${digits.slice(7)}` : digits}</span>
     </div>
   );
 }
