@@ -38,9 +38,15 @@ export default function ShippingTemplate({ invoiceData, t, lang }) {
     bankAccountHolder,
     footerNote,
     visualTheme = "modern",
-    paperTexture = false,
+    paperTexture,
+    paperYellowing,
+    paperCrumple,
     paperStrength = "soft"
   } = invoiceData;
+
+  const yellowingEnabled = Boolean(paperYellowing ?? paperTexture);
+  const crumpleEnabled = Boolean(paperCrumple ?? paperTexture);
+  const hasPaperEffect = yellowingEnabled || crumpleEnabled;
 
   const sheetRef = useRef(null);
   const contentRef = useRef(null);
@@ -132,11 +138,11 @@ export default function ShippingTemplate({ invoiceData, t, lang }) {
 
   return (
     <div
-      className={`invoice-a4-sheet tpl-shipping invoice-theme-${visualTheme}${paperTexture ? ` paper-crumpled invoice-crumple-${paperStrength}` : ""}`}
+      className={`invoice-a4-sheet tpl-shipping invoice-theme-${visualTheme}${yellowingEnabled ? " paper-yellowed" : ""}${crumpleEnabled ? ` paper-crumpled invoice-crumple-${paperStrength}` : ""}`}
       ref={sheetRef}
       id="invoice-capture-area"
     >
-      {paperTexture && <PaperTexture />}
+      {hasPaperEffect && <PaperTexture yellowing={yellowingEnabled} crumpled={crumpleEnabled} />}
       <div className="tpl2-page-content" ref={contentRef}>
 
         {/* Order summary box + title / amount badge */}

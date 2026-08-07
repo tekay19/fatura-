@@ -449,7 +449,19 @@ textarea.form-control {
   vertical-align: baseline !important;
 }
 
-/* Slip-only paper surface; also captured in the receipt PDF. */
+/* Full-sheet paper layers shared by invoices and slips, including PDF output. */
+
+.paper-yellowing {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(80% 55% at 8% 4%, rgba(255, 255, 255, 0.42), transparent 62%),
+    radial-gradient(75% 52% at 94% 96%, rgba(126, 99, 58, 0.075), transparent 68%),
+    #f7f0e2;
+  box-shadow: inset 0 0 90px rgba(117, 88, 50, 0.055);
+}
 
 .paper-surface {
   position: absolute;
@@ -457,7 +469,7 @@ textarea.form-control {
   z-index: 0;
   background-size: 100% 100%;
   background-repeat: no-repeat;
-  background-color: #faf7ef;
+  background-color: transparent;
   pointer-events: none;
 }
 
@@ -495,6 +507,11 @@ textarea.form-control {
 }
 
 .invoice-a4-sheet.paper-crumpled > .paper-surface {
+  z-index: 0;
+}
+
+.invoice-a4-sheet.paper-yellowed > .paper-yellowing,
+.receipt-sheet.paper-yellowed > .paper-yellowing {
   z-index: 0;
 }
 
@@ -913,6 +930,12 @@ input, select, textarea {
 .editor-tab-btn.active {
   color: var(--accent-color);
   background-color: rgba(99, 102, 241, 0.1);
+}
+
+.editor-tab-icon-only {
+  min-width: 42px;
+  justify-content: center;
+  padding-inline: 0.7rem;
 }
 
 /* History List Layout */
@@ -1392,6 +1415,46 @@ input, select, textarea {
   min-height: 38px;
   padding: 0.55rem;
   background-color: rgba(255, 255, 255, 0.72);
+}
+
+.paper-effect-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.paper-effect-buttons button {
+  min-height: 42px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.4rem;
+  background-color: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.paper-effect-buttons button:hover {
+  border-color: #a9824f;
+  color: #6f512c;
+}
+
+.paper-effect-buttons button.active {
+  border-color: #a9824f;
+  background-color: #f5ecdd;
+  color: #654923;
+  box-shadow: inset 0 0 0 1px rgba(169, 130, 79, 0.12);
+}
+
+.slip-paper-panel .paper-effect-buttons button {
+  background-color: #ffffff;
+}
+
+.slip-paper-panel .paper-effect-buttons button.active {
+  background-color: #f5ecdd;
 }
 
 .asin-tool-card > p {
@@ -2122,19 +2185,6 @@ input, select, textarea {
   font-variant-numeric: tabular-nums;
 }
 
-.slip-check {
-  flex-direction: row !important;
-  align-items: center;
-  gap: 0.55rem !important;
-  color: #d7dee7 !important;
-}
-
-.slip-check input {
-  width: 18px;
-  min-height: 18px;
-  accent-color: #b77b42;
-}
-
 .slip-paper-panel {
   border-color: #67523e;
   background-color: #2b2c37;
@@ -2211,14 +2261,6 @@ input, select, textarea {
   background-color: var(--bg-sidebar);
   color: var(--text-main);
   box-shadow: none;
-}
-
-.slip-editor-tabs {
-  padding-inline: 1.5rem;
-}
-
-.slip-editor-tabs .editor-tab-btn {
-  cursor: default;
 }
 
 .slip-app-header .slip-actions {
@@ -2365,10 +2407,6 @@ input, select, textarea {
 
 .slip-live-total strong {
   color: var(--accent-color);
-}
-
-.slip-check {
-  color: var(--text-main) !important;
 }
 
 .slip-paper-panel {

@@ -199,7 +199,8 @@ export default function App() {
   const [invoiceData, setInvoiceData] = useState({
     id: "initial-id",
     visualTheme: "modern",
-    paperTexture: false,
+    paperYellowing: false,
+    paperCrumple: false,
     paperStrength: "soft",
     title: defaults.title,
     logo: null,
@@ -311,7 +312,8 @@ export default function App() {
     setInvoiceData({
       id: Date.now().toString(),
       visualTheme: invoiceData.visualTheme || "modern",
-      paperTexture: false,
+      paperYellowing: false,
+      paperCrumple: false,
       paperStrength: invoiceData.paperStrength || "soft",
       title: defaults.title,
       logo: null,
@@ -530,11 +532,11 @@ export default function App() {
           <div className="editor-tabs">
             <button
               type="button"
-              className={`editor-tab-btn ${activeTab === "edit" ? "active" : ""}`}
+              className={`editor-tab-btn editor-tab-icon-only ${activeTab === "edit" ? "active" : ""}`}
               onClick={() => setActiveTab("edit")}
+              aria-label="Fatura düzenleyiciye dön"
             >
               <FileText size={16} />
-              {uiT.editTab}
             </button>
             <button
               type="button"

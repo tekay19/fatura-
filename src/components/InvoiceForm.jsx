@@ -14,6 +14,8 @@ export default function InvoiceForm({ invoiceData, onChange, t }) {
   const [asinMarket, setAsinMarket] = useState("com");
   const [asinError, setAsinError] = useState("");
   const visualTheme = invoiceData.visualTheme || "modern";
+  const yellowingEnabled = Boolean(invoiceData.paperYellowing ?? invoiceData.paperTexture);
+  const crumpleEnabled = Boolean(invoiceData.paperCrumple ?? invoiceData.paperTexture);
 
   const invoiceThemes = [
     { id: "modern", label: "Modern Grid", color: "#259ac4" },
@@ -130,24 +132,31 @@ export default function InvoiceForm({ invoiceData, onChange, t }) {
         </div>
 
         <div className="invoice-paper-controls">
-          <label className="invoice-paper-toggle">
-            <input
-              type="checkbox"
-              checked={Boolean(invoiceData.paperTexture)}
-              onChange={(event) => handleFieldChange("paperTexture", event.target.checked)}
-            />
-            <span>
-              <strong>Hafif sarartı ve buruşukluk</strong>
-              <small>A4 ve PDF sınırlarını değiştirmeden doğal kâğıt dokusu uygular.</small>
-            </span>
-          </label>
+          <div className="paper-effect-buttons" aria-label="Kâğıt efektleri">
+            <button
+              type="button"
+              className={yellowingEnabled ? "active" : ""}
+              onClick={() => handleFieldChange("paperYellowing", !yellowingEnabled)}
+              aria-pressed={yellowingEnabled}
+            >
+              Sarartı
+            </button>
+            <button
+              type="button"
+              className={crumpleEnabled ? "active" : ""}
+              onClick={() => handleFieldChange("paperCrumple", !crumpleEnabled)}
+              aria-pressed={crumpleEnabled}
+            >
+              Buruşukluk
+            </button>
+          </div>
           <label className="invoice-paper-strength">
-            Yoğunluk
+            Buruşukluk yoğunluğu
             <select
               className="form-control"
               value={invoiceData.paperStrength || "soft"}
               onChange={(event) => handleFieldChange("paperStrength", event.target.value)}
-              disabled={!invoiceData.paperTexture}
+              disabled={!crumpleEnabled}
             >
               <option value="soft">Hafif</option>
               <option value="natural">Doğal</option>
