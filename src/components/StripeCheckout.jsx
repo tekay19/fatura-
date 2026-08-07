@@ -180,7 +180,7 @@ export default function StripeCheckout({ invoiceData, onClose, onPaymentSuccess,
                 className="form-control"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Semih Software"
+                placeholder="Atlas Software"
                 required
                 disabled={isProcessing}
                 autoComplete="cc-name"

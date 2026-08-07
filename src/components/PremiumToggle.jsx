@@ -77,7 +77,7 @@ export default function PremiumToggle({ invoiceData, onChange, t, lang }) {
               className="form-control"
               value={invoiceData.stripeEmail || ""}
               onChange={(e) => handleFieldChange("stripeEmail", e.target.value)}
-              placeholder="stripe@semihsoftware.com"
+              placeholder="stripe@atlas-software.example"
               required
             />
           </div>
@@ -132,7 +132,7 @@ export default function PremiumToggle({ invoiceData, onChange, t, lang }) {
               className="form-control"
               value={invoiceData.bankAccountHolder || ""}
               onChange={(e) => handleFieldChange("bankAccountHolder", e.target.value)}
-              placeholder="Semih Yazılım"
+              placeholder="Atlas Teknoloji"
               autoComplete="name"
             />
           </div>

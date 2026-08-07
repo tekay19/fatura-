@@ -45,10 +45,10 @@ const getLanguageDefaults = (lang) => {
     case "tr":
       return {
         title: "Fatura",
-        fromName: "Semih Yazılım",
-        fromEmail: "info@semihsoftware.com",
+        fromName: "Atlas Teknoloji",
+        fromEmail: "billing@atlas-software.example",
         fromAddress: "New York / ABD",
-        fromWebsite: "www.semihsoftware.com",
+        fromWebsite: "www.atlas-software.example",
         fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness LLC",
         toEmail: "john@abcfitness.com",
@@ -65,17 +65,17 @@ const getLanguageDefaults = (lang) => {
         toVatId: "4791028374",
         toRegNo: "",
         bankName: "Garanti BBVA",
-        bankAccountHolder: "Semih Yazılım ve Danışmanlık",
+        bankAccountHolder: "Atlas Teknoloji ve Danışmanlık",
         bankIban: "TR56 0006 2000 0001 2345 6789 01",
         bankBic: ""
       };
     case "de":
       return {
         title: "Rechnung",
-        fromName: "Semih Software GmbH",
-        fromEmail: "info@semihsoftware.com",
+        fromName: "Atlas Software GmbH",
+        fromEmail: "billing@atlas-software.example",
         fromAddress: "New York / USA",
-        fromWebsite: "www.semihsoftware.com",
+        fromWebsite: "www.atlas-software.example",
         fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness GmbH",
         toEmail: "john@abcfitness.com",
@@ -93,17 +93,17 @@ const getLanguageDefaults = (lang) => {
         toVatId: "DE749102837",
         toRegNo: "HRB 9912",
         bankName: "Deutsche Bank",
-        bankAccountHolder: "Semih Software GmbH",
+        bankAccountHolder: "Atlas Software GmbH",
         bankIban: "DE89 3704 0044 0532 0130 00",
         bankBic: "DEUTDEDDFXX"
       };
     case "de-AT":
       return {
         title: "Rechnung",
-        fromName: "Semih Software GmbH",
-        fromEmail: "info@semihsoftware.com",
+        fromName: "Atlas Software GmbH",
+        fromEmail: "billing@atlas-software.example",
         fromAddress: "New York / USA",
-        fromWebsite: "www.semihsoftware.com",
+        fromWebsite: "www.atlas-software.example",
         fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness GmbH",
         toEmail: "john@abcfitness.com",
@@ -121,17 +121,17 @@ const getLanguageDefaults = (lang) => {
         toVatId: "ATU12345678",
         toRegNo: "FN 112233 t",
         bankName: "Erste Bank",
-        bankAccountHolder: "Semih Software GmbH",
+        bankAccountHolder: "Atlas Software GmbH",
         bankIban: "AT12 2011 1000 1234 5678",
         bankBic: "EBANKATWWXXX"
       };
     case "da":
       return {
         title: "Faktura",
-        fromName: "Semih Software ApS",
-        fromEmail: "info@semihsoftware.com",
+        fromName: "Atlas Software ApS",
+        fromEmail: "billing@atlas-software.example",
         fromAddress: "New York / USA",
-        fromWebsite: "www.semihsoftware.com",
+        fromWebsite: "www.atlas-software.example",
         fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness ApS",
         toEmail: "john@abcfitness.com",
@@ -147,17 +147,17 @@ const getLanguageDefaults = (lang) => {
         toVatId: "DK87654321",
         toRegNo: "CVR 87654321",
         bankName: "Danske Bank",
-        bankAccountHolder: "Semih Software ApS",
+        bankAccountHolder: "Atlas Software ApS",
         bankIban: "DK45 3000 1234 5678 90",
         bankBic: "DANSKDK22XXX"
       };
     case "it":
       return {
         title: "Fattura",
-        fromName: "Semih Software S.r.l.",
-        fromEmail: "info@semihsoftware.com",
+        fromName: "Atlas Software S.r.l.",
+        fromEmail: "billing@atlas-software.example",
         fromAddress: "New York / USA",
-        fromWebsite: "www.semihsoftware.com",
+        fromWebsite: "www.atlas-software.example",
         fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness S.r.l.",
         toEmail: "john@abcfitness.com",
@@ -174,17 +174,17 @@ const getLanguageDefaults = (lang) => {
         toVatId: "IT98765432109",
         toRegNo: "98765432109",
         bankName: "UniCredit",
-        bankAccountHolder: "Semih Software S.r.l.",
+        bankAccountHolder: "Atlas Software S.r.l.",
         bankIban: "IT99 C123 4567 8901 2345 6789 012",
         bankBic: "UNCRITM1XXX"
       };
     case "pt":
       return {
         title: "Fatura",
-        fromName: "Semih Software Lda",
-        fromEmail: "info@semihsoftware.com",
+        fromName: "Atlas Software Lda",
+        fromEmail: "billing@atlas-software.example",
         fromAddress: "New York / EUA",
-        fromWebsite: "www.semihsoftware.com",
+        fromWebsite: "www.atlas-software.example",
         fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness Lda",
         toEmail: "john@abcfitness.com",
@@ -200,7 +200,7 @@ const getLanguageDefaults = (lang) => {
         toVatId: "PT512345678",
         toRegNo: "512345678",
         bankName: "Banco BPI",
-        bankAccountHolder: "Semih Software Lda",
+        bankAccountHolder: "Atlas Software Lda",
         bankIban: "PT50 0010 0000 1234 5678 9012 3",
         bankBic: "BPIOPTPLXXX"
       };
@@ -208,10 +208,10 @@ const getLanguageDefaults = (lang) => {
     default:
       return {
         title: "Invoice",
-        fromName: "Semih Software Ltd",
-        fromEmail: "info@semihsoftware.com",
+        fromName: "Atlas Software Ltd",
+        fromEmail: "billing@atlas-software.example",
         fromAddress: "New York / USA",
-        fromWebsite: "www.semihsoftware.com",
+        fromWebsite: "www.atlas-software.example",
         fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness LLC",
         toEmail: "john@abcfitness.com",
@@ -227,7 +227,7 @@ const getLanguageDefaults = (lang) => {
         toVatId: "US1234567",
         toRegNo: "",
         bankName: "HSBC Bank",
-        bankAccountHolder: "Semih Software Ltd",
+        bankAccountHolder: "Atlas Software Ltd",
         bankIban: "GB29 HSBC 4005 1512 3456 78",
         bankBic: "HSBCHGB22XXX"
       };

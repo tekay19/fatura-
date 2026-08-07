@@ -456,7 +456,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
               className="form-control"
               value={invoiceData.fromName}
               onChange={(e) => handleFieldChange("fromName", e.target.value)}
-              placeholder="Semih Software"
+              placeholder="Atlas Software"
               autoComplete="name"
             />
           </div>
@@ -468,7 +468,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
               className="form-control"
               value={invoiceData.fromEmail}
               onChange={(e) => handleFieldChange("fromEmail", e.target.value)}
-              placeholder="info@semihsoftware.com"
+              placeholder="billing@atlas-software.example"
               autoComplete="email"
             />
           </div>
@@ -495,7 +495,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
               className="form-control"
               value={invoiceData.fromWebsite}
               onChange={(e) => handleFieldChange("fromWebsite", e.target.value)}
-              placeholder="www.semihsoftware.com"
+              placeholder="www.atlas-software.example"
             />
           </div>
           <div className="form-group">

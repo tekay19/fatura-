@@ -99,7 +99,7 @@ export default function ClassicTemplate({ invoiceData, t, elementRef, onPayClick
         <div className="preview-meta-group">
           <h5>{t.from}</h5>
           <div className="preview-meta-address">
-            <strong style={{ fontSize: "1.05rem" }}>{fromName || "Semih Yazılım"}</strong>
+            <strong style={{ fontSize: "1.05rem" }}>{fromName || "Atlas Teknoloji"}</strong>
             {fromAddress && `${fromAddress}`}
             {fromPhone && `\n${t.phone}: ${fromPhone}`}
             {fromEmail && `\n${t.email}: ${fromEmail}`}
