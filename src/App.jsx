@@ -553,80 +553,63 @@ export default function App() {
   return (
     <div className="app-container">
       {/* Header controls */}
-      <header className="app-header">
-        <div className="brand-section">
+      <header className="app-header invoice-command-bar">
+        <div className="brand-section invoice-command-brand">
           <button type="button" className="workspace-back-btn" onClick={() => setActiveTool(null)} aria-label="Araç menüsüne dön">
             <ArrowLeft size={17} />
             <span>Menü</span>
           </button>
-          <Receipt className="brand-icon" size={28} />
-          <h1 className="brand-title">Fatura oluşturucu</h1>
+          <span className="invoice-command-separator" aria-hidden="true" />
+          <span className="invoice-brand-mark" aria-hidden="true"><Receipt size={21} /></span>
+          <div className="invoice-brand-copy">
+            <h1 className="brand-title">Fatura oluşturucu</h1>
+            <span>Belge çalışma alanı</span>
+          </div>
         </div>
         
-        <div className="header-controls">
-          {/* Language Selector */}
-          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "500" }}>PDF Dili:</span>
-          <select
-            className="select-lang"
-            value={lang}
-            onChange={(e) => handleLangChange(e.target.value)}
-            aria-label="Language Select"
-          >
-            <option value="tr">Türkçe</option>
-            <option value="en">English</option>
-            <option value="de">Deutsch (DE)</option>
-            <option value="de-AT">Deutsch (AT - Avusturya)</option>
-            <option value="da">Dansk (Danca)</option>
-            <option value="it">Italiano (İtalyanca)</option>
-            <option value="pt">Português (Portekizce)</option>
-          </select>
+        <div className="header-controls invoice-command-controls">
+          <label className="invoice-language-control">
+            <span>PDF dili</span>
+            <select
+              className="select-lang"
+              value={lang}
+              onChange={(e) => handleLangChange(e.target.value)}
+              aria-label="PDF dili"
+            >
+              <option value="tr">Türkçe</option>
+              <option value="en">English</option>
+              <option value="de">Deutsch (DE)</option>
+              <option value="de-AT">Deutsch (AT - Avusturya)</option>
+              <option value="da">Dansk (Danca)</option>
+              <option value="it">Italiano (İtalyanca)</option>
+              <option value="pt">Português (Portekizce)</option>
+            </select>
+          </label>
 
-          {/* New Invoice Button */}
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={createNewInvoice}
-            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-          >
-            <Plus size={16} />
-            <span className="pdf-no-print">{uiT.newInvoice}</span>
-          </button>
+          <nav className="invoice-create-actions" aria-label="Fatura oluşturma işlemleri">
+            <button type="button" className="invoice-command-button" onClick={createNewInvoice}>
+              <Plus size={16} />
+              <span className="pdf-no-print">{uiT.newInvoice}</span>
+            </button>
+            <button type="button" className="invoice-command-button invoice-random-button" onClick={createRandomInvoice}>
+              <Shuffle size={16} />
+              <span className="pdf-no-print">Rastgele</span>
+            </button>
+          </nav>
 
-          <button
-            type="button"
-            className="btn-secondary invoice-random-button"
-            onClick={createRandomInvoice}
-          >
-            <Shuffle size={16} />
-            <span className="pdf-no-print">Rastgele Fatura</span>
-          </button>
-
-          {/* Save Invoice Button */}
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={saveCurrentInvoice}
-            style={{ backgroundColor: "var(--success-color)", boxShadow: "0 4px 6px -1px rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", gap: "0.5rem" }}
-          >
-            <Save size={16} />
-            <span className="pdf-no-print">{uiT.saveInvoice}</span>
-          </button>
-
-          {/* Download PDF button */}
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={downloadPdf}
-            disabled={isGenerating}
-          >
-            <Download size={18} />
-            {isGenerating ? "..." : uiT.downloadPdf}
-          </button>
-
-          <button type="button" className="btn-secondary" onClick={() => window.print()}>
-            <Printer size={17} />
-            <span>Yazdır</span>
-          </button>
+          <nav className="invoice-output-actions" aria-label="Fatura çıktı işlemleri">
+            <button type="button" className="invoice-save-button" onClick={saveCurrentInvoice}>
+              <Save size={16} />
+              <span className="pdf-no-print">Kaydet</span>
+            </button>
+            <button type="button" className="invoice-pdf-button" onClick={downloadPdf} disabled={isGenerating}>
+              <Download size={17} />
+              <span>{isGenerating ? "Hazırlanıyor" : "PDF indir"}</span>
+            </button>
+            <button type="button" className="invoice-print-button" onClick={() => window.print()} aria-label="Yazdır" title="Yazdır">
+              <Printer size={17} />
+            </button>
+          </nav>
         </div>
       </header>
 
