@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen, ArrowLeft, Printer, Shuffle } from "lucide-react";
+import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen, ArrowLeft, Printer, Shuffle, ChevronDown, Check } from "lucide-react";
 import { translations } from "./components/translations";
 import InvoiceForm from "./components/InvoiceForm";
 import InvoicePreview from "./components/InvoicePreview";
@@ -40,6 +40,16 @@ const randomInteger = (min, max) => {
 };
 
 const randomFrom = (values) => values[randomInteger(0, values.length - 1)];
+
+const PDF_LANGUAGE_OPTIONS = [
+  { value: "tr", code: "TR", label: "Türkçe" },
+  { value: "en", code: "EN", label: "English" },
+  { value: "de", code: "DE", label: "Deutsch" },
+  { value: "de-AT", code: "AT", label: "Deutsch · AT" },
+  { value: "da", code: "DA", label: "Dansk" },
+  { value: "it", code: "IT", label: "Italiano" },
+  { value: "pt", code: "PT", label: "Português" }
+];
 
 // Safari/WebKit can discard the width of ordinary spaces while html2canvas
 // measures text. Give every word gap a real inline-box width in the export
@@ -181,6 +191,7 @@ export default function App() {
   const [scale, setScale] = useState(1);
   const containerRef = useRef(null);
   const scaleWrapperRef = useRef(null);
+  const languageMenuRef = useRef(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -266,6 +277,7 @@ export default function App() {
 
   const uiT = translations["tr"]; // UI is always in Turkish
   const pdfT = translations[lang]; // PDF output matches the selected language
+  const selectedPdfLanguage = PDF_LANGUAGE_OPTIONS.find((option) => option.value === lang) || PDF_LANGUAGE_OPTIONS[0];
 
   // Enforce light mode only
   useEffect(() => {
@@ -300,6 +312,11 @@ export default function App() {
         customerServicePhone: updateIfDefault(prev.customerServicePhone, prevDefaults.customerServicePhone, newDefaults.customerServicePhone)
       };
     });
+  };
+
+  const selectPdfLanguage = (newLang) => {
+    handleLangChange(newLang);
+    languageMenuRef.current?.removeAttribute("open");
   };
 
   const saveCurrentInvoice = () => {
@@ -568,43 +585,51 @@ export default function App() {
         </div>
         
         <div className="header-controls invoice-command-controls">
-          <label className="invoice-language-control">
-            <span>PDF dili</span>
-            <select
-              className="select-lang"
-              value={lang}
-              onChange={(e) => handleLangChange(e.target.value)}
-              aria-label="PDF dili"
-            >
-              <option value="tr">Türkçe</option>
-              <option value="en">English</option>
-              <option value="de">Deutsch (DE)</option>
-              <option value="de-AT">Deutsch (AT - Avusturya)</option>
-              <option value="da">Dansk (Danca)</option>
-              <option value="it">Italiano (İtalyanca)</option>
-              <option value="pt">Português (Portekizce)</option>
-            </select>
-          </label>
+          <details
+            className="invoice-language-control"
+            ref={languageMenuRef}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.removeAttribute("open");
+            }}
+          >
+            <summary aria-label={`PDF dili: ${selectedPdfLanguage.label}`}>
+              <span><small>PDF dili</small><strong>{selectedPdfLanguage.code}</strong></span>
+              <ChevronDown size={14} aria-hidden="true" />
+            </summary>
+            <div className="invoice-language-menu" role="menu">
+              {PDF_LANGUAGE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={option.value === lang ? "active" : ""}
+                  onClick={() => selectPdfLanguage(option.value)}
+                  role="menuitemradio"
+                  aria-checked={option.value === lang}
+                >
+                  <span>{option.code}</span>
+                  <strong>{option.label}</strong>
+                  {option.value === lang && <Check size={14} aria-hidden="true" />}
+                </button>
+              ))}
+            </div>
+          </details>
 
           <nav className="invoice-create-actions" aria-label="Fatura oluşturma işlemleri">
-            <button type="button" className="invoice-command-button" onClick={createNewInvoice}>
+            <button type="button" className="invoice-command-button" onClick={createNewInvoice} aria-label="Yeni fatura" title="Yeni fatura">
               <Plus size={16} />
-              <span className="pdf-no-print">{uiT.newInvoice}</span>
             </button>
-            <button type="button" className="invoice-command-button invoice-random-button" onClick={createRandomInvoice}>
+            <button type="button" className="invoice-command-button invoice-random-button" onClick={createRandomInvoice} aria-label="Rastgele fatura oluştur" title="Rastgele fatura oluştur">
               <Shuffle size={16} />
-              <span className="pdf-no-print">Rastgele</span>
             </button>
           </nav>
 
           <nav className="invoice-output-actions" aria-label="Fatura çıktı işlemleri">
-            <button type="button" className="invoice-save-button" onClick={saveCurrentInvoice}>
+            <button type="button" className="invoice-save-button" onClick={saveCurrentInvoice} aria-label="Faturayı kaydet" title="Faturayı kaydet">
               <Save size={16} />
-              <span className="pdf-no-print">Kaydet</span>
             </button>
-            <button type="button" className="invoice-pdf-button" onClick={downloadPdf} disabled={isGenerating}>
+            <button type="button" className="invoice-pdf-button" onClick={downloadPdf} disabled={isGenerating} aria-label="PDF indir" title="PDF indir">
               <Download size={17} />
-              <span>{isGenerating ? "Hazırlanıyor" : "PDF indir"}</span>
+              <span>{isGenerating ? "…" : "PDF"}</span>
             </button>
             <button type="button" className="invoice-print-button" onClick={() => window.print()} aria-label="Yazdır" title="Yazdır">
               <Printer size={17} />

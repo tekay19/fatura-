@@ -3323,38 +3323,124 @@ input, select, textarea {
 }
 
 .invoice-language-control {
-  min-width: 174px;
+  position: relative;
+  width: 84px;
+  min-width: 84px;
   min-height: 48px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.02rem;
-  padding: 0.35rem 0.7rem 0.32rem;
   border: 1px solid #d6dee8;
   border-radius: 0.65rem;
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(40, 58, 78, 0.035);
 }
 
-.invoice-language-control > span {
-  color: #8490a1;
-  font-size: 0.6rem;
-  font-weight: 650;
-  letter-spacing: 0.025em;
+.invoice-language-control summary {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.34rem 0.52rem 0.3rem 0.6rem;
+  color: #1e293b;
+  cursor: pointer;
+  list-style: none;
 }
 
-.invoice-language-control .select-lang {
-  width: 100%;
-  min-height: 22px;
-  padding: 0 1.35rem 0 0;
-  border: 0;
-  border-radius: 0;
-  outline: 0;
-  background-color: transparent;
-  color: #1e293b;
-  font-size: 0.77rem;
+.invoice-language-control summary::-webkit-details-marker {
+  display: none;
+}
+
+.invoice-language-control summary > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.02rem;
+}
+
+.invoice-language-control summary small {
+  color: #8490a1;
+  font-size: 0.56rem;
   font-weight: 650;
-  box-shadow: none;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.invoice-language-control summary strong {
+  font-size: 0.76rem;
+  font-weight: 720;
+  line-height: 1.1;
+}
+
+.invoice-language-control summary > svg {
+  flex: 0 0 auto;
+  color: #8b97a7;
+  transition: transform 160ms ease;
+}
+
+.invoice-language-control[open] {
+  border-color: #9fb2c5;
+  box-shadow: 0 0 0 3px rgba(49, 90, 135, 0.11);
+}
+
+.invoice-language-control[open] summary > svg {
+  transform: rotate(180deg);
+}
+
+.invoice-language-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  z-index: 120;
+  width: 188px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.35rem;
+  border: 1px solid #d6dee8;
+  border-radius: 0.72rem;
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(40, 58, 78, 0.16), 0 2px 8px rgba(40, 58, 78, 0.07);
+}
+
+.invoice-language-menu button {
+  min-height: 36px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.52rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: #526074;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.invoice-language-menu button:hover,
+.invoice-language-menu button:focus-visible {
+  outline: 0;
+  background: #eef3f8;
+  color: #172033;
+}
+
+.invoice-language-menu button.active {
+  background: #eaf0f7;
+  color: #315a87;
+}
+
+.invoice-language-menu button > span {
+  font-size: 0.66rem;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+}
+
+.invoice-language-menu button > strong {
+  overflow: hidden;
+  font-size: 0.72rem;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .invoice-create-actions,
@@ -3393,6 +3479,8 @@ input, select, textarea {
 }
 
 .invoice-command-button {
+  width: 40px;
+  padding: 0;
   background: transparent;
   color: #536174;
 }
@@ -3412,6 +3500,8 @@ input, select, textarea {
 }
 
 .invoice-save-button {
+  width: 40px;
+  padding: 0;
   border-color: #b9d8ca;
   background: #eef8f3;
   color: #176447;
@@ -3423,7 +3513,8 @@ input, select, textarea {
 }
 
 .invoice-pdf-button {
-  min-width: 98px;
+  min-width: 72px;
+  padding-inline: 0.65rem;
   border-color: #315a87;
   background: #315a87;
   color: #ffffff;
@@ -3498,28 +3589,22 @@ input, select, textarea {
   }
 
   .invoice-command-controls {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 0.55rem;
   }
 
   .invoice-language-control {
-    width: 100%;
+    width: 84px;
   }
 
   .invoice-create-actions,
   .invoice-output-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
   }
 
   .invoice-output-actions {
-    grid-template-columns: 1fr 1fr 40px;
-  }
-
-  .invoice-command-button,
-  .invoice-save-button,
-  .invoice-pdf-button {
-    width: 100%;
+    margin-left: auto;
   }
 }
