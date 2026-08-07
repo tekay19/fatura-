@@ -6,7 +6,14 @@ export default function ToolLauncher({ onSelect }) {
       <div className="launcher-grain" aria-hidden="true" />
       <section className="launcher-shell" aria-labelledby="launcher-title">
         <div className="launcher-brand">
-          <span className="launcher-brand-mark">I</span>
+          <span className="launcher-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" role="presentation">
+              <path className="launcher-logo-sheet" d="M11 7.5h18l8 8V39a3 3 0 0 1-3 3H14a3 3 0 0 1-3-3V7.5Z" />
+              <path className="launcher-logo-fold" d="M29 7.5v8h8" />
+              <path className="launcher-logo-line" d="M17 20h12M17 25h14" />
+              <path className="launcher-logo-receipt" d="M17 30h14v10l-2.3-1.6-2.35 1.6L24 38.4 21.65 40l-2.35-1.6L17 40V30Z" />
+            </svg>
+          </span>
           <div>
             <strong>Invoice Studio</strong>
             <span>Fatura ve slip araçları</span>
@@ -14,9 +21,7 @@ export default function ToolLauncher({ onSelect }) {
         </div>
 
         <div className="launcher-heading">
-          <span className="launcher-kicker">Çalışma alanı</span>
           <h1 id="launcher-title">Hangi belgeyi hazırlayacaksınız?</h1>
-          <p>Kurumsal faturaları ve market sliplerini ayrı araçlarda, aynı PDF kalitesiyle oluşturun.</p>
         </div>
 
         <div className="launcher-tools">
@@ -47,7 +52,6 @@ export default function ToolLauncher({ onSelect }) {
           </button>
         </div>
 
-        <footer className="launcher-footer">Yerel çalışır · Veriler tarayıcınızda kalır</footer>
       </section>
     </main>
   );
