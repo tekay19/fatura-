@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen, ArrowLeft, Printer, Shuffle, ChevronDown, Check } from "lucide-react";
+import { Download, Receipt, Plus, ArrowLeft, Printer, Shuffle, ChevronDown, Check } from "lucide-react";
 import { translations } from "./components/translations";
 import InvoiceForm from "./components/InvoiceForm";
 import InvoicePreview from "./components/InvoicePreview";
 import MarketSlipApp from "./components/MarketSlipApp";
 import ToolLauncher from "./components/ToolLauncher";
-import { calculateTotals, getCurrencySymbol } from "./utils/calculations";
+import { calculateTotals } from "./utils/calculations";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
@@ -215,25 +215,6 @@ export default function App() {
     };
   }, [activeTool]);
 
-  // Saved Invoices from LocalStorage
-  const [savedInvoices, setSavedInvoices] = useState(() => {
-    try {
-      const stored = localStorage.getItem("saved_invoices");
-      return stored ? JSON.parse(stored) : [];
-    } catch (e) {
-      console.error("Failed to parse saved invoices", e);
-      return [];
-    }
-  });
-
-  // Active Tab state ("edit" or "history")
-  const [activeTab, setActiveTab] = useState("edit");
-
-  // Sync saved invoices with localStorage
-  useEffect(() => {
-    localStorage.setItem("saved_invoices", JSON.stringify(savedInvoices));
-  }, [savedInvoices]);
-
   // Initialize invoice data with Turkish defaults
   const defaults = getLanguageDefaults("tr");
   const [invoiceData, setInvoiceData] = useState({
@@ -329,40 +310,6 @@ export default function App() {
     languageMenuRef.current?.removeAttribute("open");
   };
 
-  const saveCurrentInvoice = () => {
-    const invoiceId = invoiceData.id || Date.now().toString();
-    const invoiceToSave = { ...invoiceData, id: invoiceId };
-    
-    const existingIndex = savedInvoices.findIndex(
-      (inv) => inv.id === invoiceId || (inv.invoiceNumber === invoiceData.invoiceNumber && inv.invoiceNumber !== "")
-    );
-
-    let updatedList;
-    if (existingIndex > -1) {
-      updatedList = [...savedInvoices];
-      updatedList[existingIndex] = invoiceToSave;
-    } else {
-      updatedList = [invoiceToSave, ...savedInvoices];
-    }
-    
-    setSavedInvoices(updatedList);
-    setInvoiceData(invoiceToSave);
-    alert(uiT.saveSuccess);
-  };
-
-  const loadInvoice = (invoice) => {
-    setInvoiceData(invoice);
-    setActiveTab("edit");
-  };
-
-  const deleteInvoice = (id, e) => {
-    e.stopPropagation();
-    if (confirm("Bu faturayı geçmişten silmek istediğinize emin misiniz?")) {
-      const updated = savedInvoices.filter((inv) => inv.id !== id);
-      setSavedInvoices(updated);
-    }
-  };
-
   const createNewInvoice = () => {
     const defaults = getLanguageDefaults("tr");
     setInvoiceData({
@@ -402,7 +349,6 @@ export default function App() {
       bankAccountNumber: invoiceData.bankAccountNumber || "028 009 592",
       footerNote: defaults.footerNote
     });
-    setActiveTab("edit");
   };
 
   const createRandomInvoice = () => {
@@ -469,7 +415,6 @@ export default function App() {
     randomInvoice.isPaid = paymentMode === "paid";
 
     setInvoiceData(randomInvoice);
-    setActiveTab("edit");
   };
 
   // Generate and download an A4 PDF of the live preview.
@@ -588,10 +533,6 @@ export default function App() {
           </button>
           <span className="invoice-command-separator" aria-hidden="true" />
           <span className="invoice-brand-mark" aria-hidden="true"><Receipt size={21} /></span>
-          <div className="invoice-brand-copy">
-            <h1 className="brand-title">Fatura oluşturucu</h1>
-            <span>Belge çalışma alanı</span>
-          </div>
         </div>
         
         <div className="header-controls invoice-command-controls">
@@ -631,9 +572,6 @@ export default function App() {
           </nav>
 
           <nav className="invoice-output-actions" aria-label="Fatura çıktı işlemleri">
-            <button type="button" className="invoice-save-button" onClick={saveCurrentInvoice} aria-label="Faturayı kaydet" title="Faturayı kaydet">
-              <Save size={16} />
-            </button>
             <button type="button" className="invoice-pdf-button" onClick={downloadPdf} disabled={isGenerating} aria-label="PDF indir" title="PDF indir">
               <Download size={17} />
               <span>{isGenerating ? "…" : "PDF"}</span>
@@ -648,99 +586,11 @@ export default function App() {
       {/* Split screen content */}
       <main className="main-layout">
         <div className="editor-sidebar">
-          {/* Tab switcher */}
-          <div className="editor-tabs">
-            <button
-              type="button"
-              className={`editor-tab-btn editor-tab-icon-only ${activeTab === "edit" ? "active" : ""}`}
-              onClick={() => setActiveTab("edit")}
-              aria-label="Fatura düzenleyiciye dön"
-            >
-              <FileText size={16} />
-            </button>
-            <button
-              type="button"
-              className={`editor-tab-btn ${activeTab === "history" ? "active" : ""}`}
-              onClick={() => setActiveTab("history")}
-            >
-              <History size={16} />
-              {uiT.historyTab} ({savedInvoices.length})
-            </button>
-          </div>
-
-          {activeTab === "edit" ? (
-            <InvoiceForm
-              invoiceData={invoiceData}
-              onChange={setInvoiceData}
-              t={uiT}
-            />
-          ) : (
-            <div className="editor-pane">
-              <div className="history-pane">
-                {savedInvoices.length === 0 ? (
-                  <div className="history-empty">
-                    <History size={40} style={{ opacity: 0.5 }} />
-                    <div className="history-empty-title">{uiT.noInvoices}</div>
-                  </div>
-                ) : (
-                  <div className="history-list">
-                    {savedInvoices.map((inv) => {
-                      const invTotal = calculateTotals(inv).total;
-
-                      return (
-                        <div
-                          key={inv.id}
-                          className="history-card"
-                          onClick={() => loadInvoice(inv)}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <div className="history-card-header">
-                            <span className="history-card-number">
-                              {inv.invoiceNumber || "No Number"}
-                            </span>
-                            <span className={`history-card-badge ${inv.isPaid ? "paid" : "unpaid"}`}>
-                              {inv.isPaid ? uiT.paid : uiT.unpaid}
-                            </span>
-                          </div>
-                          <div className="history-card-details">
-                            <div><strong>Müşteri:</strong> {inv.toName || "Belirtilmedi"}</div>
-                            <div><strong>Tarih:</strong> {inv.invoiceDate || "Belirtilmedi"}</div>
-                          </div>
-                          <div className="history-card-total">
-                            {getCurrencySymbol(inv.currency)}
-                            {invTotal.toFixed(2)}
-                          </div>
-                          <div className="history-card-actions">
-                            <button
-                              type="button"
-                              className="btn-secondary"
-                              style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                loadInvoice(inv);
-                              }}
-                            >
-                              <FolderOpen size={12} />
-                              {uiT.loadInvoice}
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-danger"
-                              style={{ padding: "0.3rem 0.6rem", fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem" }}
-                              onClick={(e) => deleteInvoice(inv.id, e)}
-                            >
-                              <Trash2 size={12} />
-                              {uiT.deleteInvoice}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          <InvoiceForm
+            invoiceData={invoiceData}
+            onChange={setInvoiceData}
+            t={uiT}
+          />
         </div>
         <div className="preview-pane" ref={containerRef}>
           <div ref={scaleWrapperRef} style={{
