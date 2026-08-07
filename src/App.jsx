@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen, ArrowLeft, Printer } from "lucide-react";
+import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen, ArrowLeft, Printer, Shuffle } from "lucide-react";
 import { translations } from "./components/translations";
 import InvoiceForm from "./components/InvoiceForm";
 import InvoicePreview from "./components/InvoicePreview";
@@ -11,6 +11,35 @@ import { jsPDF } from "jspdf";
 
 const initialInvoiceDate = new Date();
 const INITIAL_INVOICE_DATE = initialInvoiceDate.toISOString().split("T")[0];
+
+const RANDOM_CUSTOMERS = [
+  { name: "Northstar Commerce LLC", email: "accounts@northstarcommerce.com", address: "Austin, Texas, USA" },
+  { name: "Mavi Rota Teknoloji A.Ş.", email: "muhasebe@mavirota.com", address: "Kadıköy, İstanbul, Türkiye" },
+  { name: "Berlin Creative GmbH", email: "finance@berlincreative.de", address: "Berlin, Deutschland" },
+  { name: "Nordic Supply ApS", email: "billing@nordicsupply.dk", address: "København, Danmark" },
+  { name: "Lusitana Digital Lda", email: "contas@lusitanadigital.pt", address: "Lisboa, Portugal" },
+  { name: "Milano Retail S.r.l.", email: "amministrazione@milanoretail.it", address: "Milano, Italia" }
+];
+
+const RANDOM_PRODUCTS = [
+  { description: "E-commerce Store Setup", rate: 780 },
+  { description: "Marketplace Account Management", rate: 425 },
+  { description: "Premium Technical Support", rate: 190 },
+  { description: "Product Photography Package", rate: 340 },
+  { description: "Cloud Hosting & Maintenance", rate: 125 },
+  { description: "Custom Integration Service", rate: 560 },
+  { description: "SEO Audit and Optimization", rate: 275 },
+  { description: "WordPress Recovery Service", rate: 500 }
+];
+
+const randomInteger = (min, max) => {
+  const values = new Uint32Array(1);
+  globalThis.crypto?.getRandomValues?.(values);
+  const ratio = globalThis.crypto?.getRandomValues ? values[0] / 4294967296 : Math.random();
+  return Math.floor(ratio * (max - min + 1)) + min;
+};
+
+const randomFrom = (values) => values[randomInteger(0, values.length - 1)];
 
 // Safari/WebKit can discard the width of ordinary spaces while html2canvas
 // measures text. Give every word gap a real inline-box width in the export
@@ -349,6 +378,73 @@ export default function App() {
     setActiveTab("edit");
   };
 
+  const createRandomInvoice = () => {
+    const languageDefaults = getLanguageDefaults(lang);
+    const customer = randomFrom(RANDOM_CUSTOMERS);
+    const productPool = [...RANDOM_PRODUCTS];
+    const itemCount = randomInteger(1, 4);
+    const items = Array.from({ length: itemCount }, () => {
+      const productIndex = randomInteger(0, productPool.length - 1);
+      const [product] = productPool.splice(productIndex, 1);
+      return {
+        description: product.description,
+        quantity: randomInteger(1, 3),
+        rate: product.rate + randomInteger(-25, 60)
+      };
+    });
+    const invoiceDate = new Date();
+    invoiceDate.setDate(invoiceDate.getDate() - randomInteger(0, 45));
+    const taxByLanguage = { tr: 20, en: 8, de: 19, "de-AT": 20, da: 25, it: 22, pt: 23 };
+
+    const randomInvoice = {
+      id: `${Date.now()}-${randomInteger(100, 999)}`,
+      visualTheme: invoiceData.visualTheme || "modern",
+      paperYellowing: Boolean(invoiceData.paperYellowing),
+      paperCrumple: Boolean(invoiceData.paperCrumple),
+      paperStrength: invoiceData.paperStrength || "soft",
+      title: languageDefaults.title,
+      logo: invoiceData.logo || null,
+      invoiceNumber: `INV-${new Date().getFullYear()}-${String(randomInteger(1, 999999)).padStart(6, "0")}`,
+      invoiceDate: invoiceDate.toISOString().split("T")[0],
+      toName: customer.name,
+      toEmail: customer.email,
+      toAddress: customer.address,
+      items,
+      notes: languageDefaults.notes,
+      currency: languageDefaults.currency,
+      discount: randomFrom([0, 0, 5, 10, 15]),
+      discountType: "percent",
+      tax: taxByLanguage[lang] ?? 20,
+      addTax: 0,
+      shipping: randomFrom([0, 0, 25, 40, 75]),
+      clearanceFee: randomFrom([0, 0, 0, 35, 65]),
+      amountPaid: 0,
+      isPaid: false,
+      bankName: languageDefaults.bankName,
+      bankAccountHolder: languageDefaults.bankAccountHolder,
+      shippingCarrier: randomFrom(["UPS WORLDWIDE EXPRESS", "DHL EXPRESS", "FEDEX INTERNATIONAL", "DPD CLASSIC"]),
+      shippingName: customer.name,
+      shippingAddress: customer.address,
+      cardBrand: randomFrom(["VISA", "MASTERCARD", "AMEX"]),
+      cardLast4: String(randomInteger(0, 9999)).padStart(4, "0"),
+      customerServicePhone: languageDefaults.customerServicePhone,
+      bankAccountNumber: `${String(randomInteger(10, 99))} ${String(randomInteger(100, 999))} ${String(randomInteger(100, 999))}`,
+      footerNote: languageDefaults.footerNote
+    };
+
+    const { total } = calculateTotals(randomInvoice);
+    const paymentMode = randomFrom(["unpaid", "partial", "paid"]);
+    randomInvoice.amountPaid = paymentMode === "paid"
+      ? Number(total.toFixed(2))
+      : paymentMode === "partial"
+        ? Number((total * 0.5).toFixed(2))
+        : 0;
+    randomInvoice.isPaid = paymentMode === "paid";
+
+    setInvoiceData(randomInvoice);
+    setActiveTab("edit");
+  };
+
   // Generate and download an A4 PDF of the live preview.
   const downloadPdf = async () => {
     const element = document.getElementById("invoice-capture-area");
@@ -494,6 +590,15 @@ export default function App() {
           >
             <Plus size={16} />
             <span className="pdf-no-print">{uiT.newInvoice}</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-secondary invoice-random-button"
+            onClick={createRandomInvoice}
+          >
+            <Shuffle size={16} />
+            <span className="pdf-no-print">Rastgele Fatura</span>
           </button>
 
           {/* Save Invoice Button */}

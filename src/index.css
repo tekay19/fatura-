@@ -185,6 +185,17 @@ body {
   background-color: var(--bg-input);
 }
 
+.invoice-random-button {
+  border-color: #c4b5fd;
+  background-color: #f5f3ff;
+  color: #6d28d9;
+}
+
+.invoice-random-button:hover {
+  border-color: #8b5cf6;
+  background-color: #ede9fe;
+}
+
 /* Select language dropdown */
 .select-lang {
   font-family: var(--font-sans);
