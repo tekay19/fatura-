@@ -1,10 +1,43 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen } from "lucide-react";
 import { translations } from "./components/translations";
 import InvoiceForm from "./components/InvoiceForm";
 import InvoicePreview from "./components/InvoicePreview";
 import StripeCheckout from "./components/StripeCheckout";
-import html2pdf from "html2pdf.js";
+import { calculateTotals, getCurrencySymbol } from "./utils/calculations";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+
+// html2canvas can collapse ordinary U+0020 spaces in Safari/WebKit and some
+// font configurations. Keep the visual space as NBSP while adding <wbr> so
+// long notes and addresses can still wrap naturally in the export clone.
+const preserveCanvasSpaces = (root) => {
+  const doc = root.ownerDocument;
+  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.nodeValue?.includes(" ") && node.nodeValue.trim()) {
+      textNodes.push(node);
+    }
+  }
+
+  textNodes.forEach((node) => {
+    const parts = node.nodeValue.split(" ");
+    const fragment = doc.createDocumentFragment();
+
+    parts.forEach((part, index) => {
+      if (part) fragment.appendChild(doc.createTextNode(part));
+      if (index < parts.length - 1) {
+        fragment.appendChild(doc.createTextNode("\u00a0"));
+        fragment.appendChild(doc.createElement("wbr"));
+      }
+    });
+
+    node.parentNode?.replaceChild(fragment, node);
+  });
+};
 
 // Helper to get default editable values per language (including yasal compliance defaults)
 const getLanguageDefaults = (lang) => {
@@ -23,6 +56,7 @@ const getLanguageDefaults = (lang) => {
         notes: "İş ortaklığınız için teşekkür ederiz.",
         terms: "Ödeme fatura tarihinden itibaren 30 gün içinde yapılmalıdır.",
         currency: "TRY",
+        footerNote: "*Tüm gümrük vergileri, harçlar ve işlem ücretleri, ithalatçı adına taşıyıcı firma tarafından önceden tahsil edilmiştir.",
         // TR Compliance
         fromVatId: "3240892018",
         fromRegNo: "389201",
@@ -49,6 +83,7 @@ const getLanguageDefaults = (lang) => {
         notes: "Vielen Dank für Ihre geschätzte Zusammenarbeit.",
         terms: "Zahlbar innerhalb von 30 Tagen ohne Abzug.",
         currency: "EUR",
+        footerNote: "*Alle Einfuhrzölle, Steuern und Abfertigungsgebühren wurden im Namen des Importeurs vom Frachtführer vorab erhoben.",
         // DE Compliance
         fromVatId: "DE324089201",
         fromRegNo: "HRB 10293 B",
@@ -76,6 +111,7 @@ const getLanguageDefaults = (lang) => {
         notes: "Vielen Dank für Ihren Auftrag.",
         terms: "Zahlungsziel 30 Tage ab Rechnungsdatum.",
         currency: "EUR",
+        footerNote: "*Alle Einfuhrzölle, Steuern und Abfertigungsgebühren wurden im Namen des Importeurs vom Frachtführer vorab erhoben.",
         // AT Compliance
         fromVatId: "ATU76543210",
         fromRegNo: "FN 987654 y",
@@ -103,6 +139,7 @@ const getLanguageDefaults = (lang) => {
         notes: "Mange tak for din bestilling og dit samarbejde.",
         terms: "Betalingsbetingelser: Netto 30 dage.",
         currency: "DKK",
+        footerNote: "*Al importtold, alle afgifter og fortoldningsgebyrer er forudbetalt og opkrævet af fragtføreren på vegne af importøren.",
         // DK Compliance
         fromVatId: "DK12345678",
         fromRegNo: "CVR 12345678",
@@ -128,6 +165,7 @@ const getLanguageDefaults = (lang) => {
         notes: "Grazie per la vostra collaborazione.",
         terms: "Pagamento entro 30 giorni data fattura.",
         currency: "EUR",
+        footerNote: "*Tutti i dazi d'importazione, le imposte e le spese di sdoganamento sono stati prepagati e riscossi dal vettore per conto dell'importatore.",
         // IT Compliance
         fromVatId: "IT12345678901",
         fromRegNo: "12345678901",
@@ -154,6 +192,7 @@ const getLanguageDefaults = (lang) => {
         notes: "Agradecemos a sua preferência.",
         terms: "Pagamento até 30 dias após a data da fatura.",
         currency: "EUR",
+        footerNote: "*Todos os direitos de importação, impostos e taxas de desalfandegamento foram pré-pagos e cobrados pelo transportador em nome do importador.",
         // PT Compliance
         fromVatId: "PT509876543",
         fromRegNo: "509876543",
@@ -180,6 +219,7 @@ const getLanguageDefaults = (lang) => {
         notes: "Thank you for your business.",
         terms: "Payment due within 30 days.",
         currency: "USD",
+        footerNote: "*All import duties, taxes, and clearance fees have been prepaid and collected by the carrier on behalf of the importer.",
         // EN Compliance
         fromVatId: "GB987654321",
         fromRegNo: "09876543",
@@ -198,11 +238,10 @@ export default function App() {
   const [lang, setLang] = useState("tr");
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const previewRef = useRef(null);
-
   // Responsive Scale Calculations for A4 Live Preview
   const [scale, setScale] = useState(1);
   const containerRef = useRef(null);
+  const scaleWrapperRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -245,6 +284,8 @@ export default function App() {
   const defaults = getLanguageDefaults("tr");
   const [invoiceData, setInvoiceData] = useState({
     id: "initial-id",
+    template: "classic",
+    paperTexture: false,
     title: defaults.title,
     logo: null,
     invoiceNumber: "INV-2026-001",
@@ -280,6 +321,7 @@ export default function App() {
     tax: 20,
     addTax: 0,
     shipping: 0,
+    clearanceFee: 0,
     amountPaid: 300,
     isPaid: false,
     // Stripe settings
@@ -290,7 +332,16 @@ export default function App() {
     bankName: defaults.bankName,
     bankAccountHolder: defaults.bankAccountHolder,
     bankIban: defaults.bankIban,
-    bankBic: defaults.bankBic
+    bankBic: defaults.bankBic,
+    // Shipping template fields
+    shippingCarrier: "UPS WORLDWIDE EXPRESS",
+    shippingName: "",
+    shippingAddress: "",
+    cardBrand: "VISA",
+    cardLast4: "1550",
+    customerServicePhone: "",
+    bankAccountNumber: "028 009 592",
+    footerNote: defaults.footerNote
   });
 
   const uiT = translations["tr"]; // UI is always in Turkish
@@ -341,6 +392,7 @@ export default function App() {
         notes: updateIfDefault("notes", prev.notes, prevDefaults.notes, newDefaults.notes),
         terms: updateIfDefault("terms", prev.terms, prevDefaults.terms, newDefaults.terms),
         currency: updateIfDefault("currency", prev.currency, prevDefaults.currency, newDefaults.currency),
+        footerNote: updateIfDefault("footerNote", prev.footerNote, prevDefaults.footerNote, newDefaults.footerNote),
         
         // Bank details updates
         bankName: updateIfDefault("bankName", prev.bankName, prevDefaults.bankName || "", newDefaults.bankName || ""),
@@ -390,6 +442,8 @@ export default function App() {
     const defaults = getLanguageDefaults("tr");
     setInvoiceData({
       id: Date.now().toString(),
+      template: invoiceData.template || "classic",
+      paperTexture: Boolean(invoiceData.paperTexture),
       title: defaults.title,
       logo: null,
       invoiceNumber: "INV-" + new Date().getFullYear() + "-" + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
@@ -424,6 +478,7 @@ export default function App() {
       tax: 20,
       addTax: 0,
       shipping: 0,
+      clearanceFee: 0,
       amountPaid: 300,
       isPaid: false,
       acceptStripe: false,
@@ -432,74 +487,117 @@ export default function App() {
       bankName: defaults.bankName,
       bankAccountHolder: defaults.bankAccountHolder,
       bankIban: defaults.bankIban,
-      bankBic: defaults.bankBic
+      bankBic: defaults.bankBic,
+      shippingCarrier: invoiceData.shippingCarrier || "UPS WORLDWIDE EXPRESS",
+      shippingName: "",
+      shippingAddress: "",
+      cardBrand: invoiceData.cardBrand || "",
+      cardLast4: "",
+      customerServicePhone: invoiceData.customerServicePhone || "",
+      bankAccountNumber: invoiceData.bankAccountNumber || "028 009 592",
+      footerNote: defaults.footerNote
     });
     setActiveTab("edit");
   };
 
-  // Generate and download A4 PDF using html2pdf with exact pixel-matching dimensions
-  const downloadPdf = () => {
+  // Generate and download an A4 PDF of the live preview.
+  const downloadPdf = async () => {
     const element = document.getElementById("invoice-capture-area");
     if (!element) return;
 
     setIsGenerating(true);
+    let exportHost = null;
 
-    const opt = {
-      margin: 0,
-      filename: `${invoiceData.title || "Fatura"}_${invoiceData.invoiceNumber || "INV-001"}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
+    try {
+      // Inter is a webfont; capturing before it resolves makes html2canvas
+      // measure with the fallback face, which drops spaces and clips words.
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+
+      // Build a detached A4 clone at 1:1. This removes the responsive preview
+      // transform from the capture path entirely, so Safari and Chromium both
+      // export the full sheet rather than the scaled on-screen preview.
+      exportHost = document.createElement("div");
+      Object.assign(exportHost.style, {
+        position: "fixed",
+        inset: "0 auto auto 0",
+        width: "794px",
+        height: "1123px",
+        zIndex: "-1",
+        overflow: "hidden",
+        pointerEvents: "none",
+        background: "#ffffff"
+      });
+
+      const exportSheet = element.cloneNode(true);
+      exportSheet.id = "invoice-export-sheet";
+      exportSheet.classList.add("pdf-export-mode");
+      preserveCanvasSpaces(exportSheet);
+      exportHost.appendChild(exportSheet);
+      document.body.appendChild(exportHost);
+
+      await Promise.all(
+        Array.from(exportSheet.querySelectorAll("img")).map((image) => (
+          image.decode ? image.decode().catch(() => undefined) : Promise.resolve()
+        ))
+      );
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const canvas = await html2canvas(exportSheet, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
         logging: false,
         width: 794,
-        height: 1123
-      },
-      jsPDF: { 
-        unit: "px", 
-        format: [794, 1123], 
-        hotfixes: ["px_scaling"]
-      }
-    };
-
-    html2pdf()
-      .set(opt)
-      .from(element)
-      .save()
-      .then(() => {
-        setIsGenerating(false);
-      })
-      .catch((err) => {
-        console.error("PDF generation failed:", err);
-        setIsGenerating(false);
+        height: 1123,
+        windowWidth: 794,
+        windowHeight: 1123,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: async (doc) => {
+          const clonedSheet = doc.getElementById("invoice-export-sheet");
+          clonedSheet?.classList.add("pdf-export-mode");
+          if (doc.fonts?.ready) await doc.fonts.ready;
+        }
       });
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+        compress: true
+      });
+
+      pdf.addImage(
+        canvas.toDataURL("image/jpeg", 0.98),
+        "JPEG",
+        0,
+        0,
+        210,
+        297,
+        undefined,
+        "FAST"
+      );
+      pdf.setProperties({
+        title: `${invoiceData.title || "Fatura"} ${invoiceData.invoiceNumber || "INV-001"}`,
+        creator: "Smart Invoice"
+      });
+      pdf.save(`${invoiceData.title || "Fatura"}_${invoiceData.invoiceNumber || "INV-001"}.pdf`);
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+    } finally {
+      exportHost?.remove();
+      setIsGenerating(false);
+    }
   };
 
   // Handle successful simulated card payment
   const handlePaymentSuccess = () => {
-    // Calculate total amount to set amountPaid = total
-    const subtotal = invoiceData.items.reduce((acc, item) => {
-      const qty = parseFloat(item.quantity) || 0;
-      const rate = parseFloat(item.rate) || 0;
-      return acc + (qty * rate);
-    }, 0);
-
-    const discountVal = invoiceData.discountType === "percent"
-      ? subtotal * ((parseFloat(invoiceData.discount) || 0) / 100)
-      : (parseFloat(invoiceData.discount) || 0);
-
-    const afterDiscount = subtotal - discountVal;
-    const taxVal = afterDiscount * ((parseFloat(invoiceData.tax) || 0) / 100);
-    const addTaxVal = afterDiscount * ((parseFloat(invoiceData.addTax) || 0) / 100);
-    const shippingVal = parseFloat(invoiceData.shipping) || 0;
-    const total = afterDiscount + taxVal + addTaxVal + shippingVal;
-
-    // Update state: paid = total, isPaid = true
     setInvoiceData((prev) => ({
       ...prev,
       isPaid: true,
-      amountPaid: total
+      amountPaid: calculateTotals(prev).total
     }));
   };
 
@@ -606,22 +704,7 @@ export default function App() {
                 ) : (
                   <div className="history-list">
                     {savedInvoices.map((inv) => {
-                      // Calculate invoice total for listing
-                      const invSubtotal = inv.items.reduce((acc, item) => {
-                        const qty = parseFloat(item.quantity) || 0;
-                        const rate = parseFloat(item.rate) || 0;
-                        return acc + (qty * rate);
-                      }, 0);
-                      
-                      const invDiscountVal = inv.discountType === "percent"
-                        ? invSubtotal * ((parseFloat(inv.discount) || 0) / 100)
-                        : (parseFloat(inv.discount) || 0);
-
-                      const invAfterDiscount = invSubtotal - invDiscountVal;
-                      const invTaxVal = invAfterDiscount * ((parseFloat(inv.tax) || 0) / 100);
-                      const invAddTaxVal = invAfterDiscount * ((parseFloat(inv.addTax) || 0) / 100);
-                      const invShippingVal = parseFloat(inv.shipping) || 0;
-                      const invTotal = invAfterDiscount + invTaxVal + invAddTaxVal + invShippingVal;
+                      const invTotal = calculateTotals(inv).total;
 
                       return (
                         <div
@@ -643,10 +726,7 @@ export default function App() {
                             <div><strong>Tarih:</strong> {inv.invoiceDate || "Belirtilmedi"}</div>
                           </div>
                           <div className="history-card-total">
-                            {inv.currency === "TRY" ? "₺" : 
-                             inv.currency === "EUR" ? "€" :
-                             inv.currency === "GBP" ? "£" :
-                             inv.currency === "DKK" ? "kr." : "$"}
+                            {getCurrencySymbol(inv.currency)}
                             {invTotal.toFixed(2)}
                           </div>
                           <div className="history-card-actions">
@@ -682,7 +762,7 @@ export default function App() {
           )}
         </div>
         <div className="preview-pane" ref={containerRef}>
-          <div style={{
+          <div ref={scaleWrapperRef} style={{
             transform: `scale(${scale})`,
             transformOrigin: "top center",
             width: "794px",
@@ -693,7 +773,6 @@ export default function App() {
             <InvoicePreview
               invoiceData={invoiceData}
               t={pdfT}
-              elementRef={previewRef}
               onPayClick={() => setShowCheckoutModal(true)}
               lang={lang}
             />

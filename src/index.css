@@ -779,6 +779,19 @@ input:checked + .slider:before {
   flex-shrink: 0; /* Prevents flexbox from shrinking the A4 sheet */
 }
 
+/* Canvas export uses a locally available font with complete Turkish glyphs.
+   Normal tracking avoids html2canvas splitting words into individually
+   positioned glyphs, which can collapse spaces in the generated PDF. */
+.invoice-a4-sheet.pdf-export-mode,
+.invoice-a4-sheet.pdf-export-mode * {
+  font-family: Arial, "Helvetica Neue", sans-serif !important;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  font-kerning: none !important;
+  font-variant-ligatures: none !important;
+  font-feature-settings: "kern" 0, "liga" 0;
+}
+
 /* Distressed rubber stamp effect */
 .invoice-stamp {
   position: absolute;
@@ -1122,6 +1135,467 @@ input:checked + .slider:before {
   color: #94a3b8;
 }
 
+/* ============================================================
+   Crumpled paper effect (opt-in, works in the PDF export too)
+   ============================================================ */
+.invoice-a4-sheet.paper-crumpled {
+  background-color: #faf7ef;
+}
+
+.paper-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-color: #faf7ef;
+  pointer-events: none;
+}
+
+/* Everything the template renders must float above the surface layer */
+.invoice-a4-sheet.paper-crumpled > *:not(.paper-surface):not(.paper-creases) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Low-contrast handling shade sits over the ink as it would on a photographed
+   sheet. The actual irregular ridges are baked into the SVG below the ink. */
+.paper-creases {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background-image:
+    radial-gradient(95% 64% at 2% 1%, rgba(56, 49, 40, 0.055), rgba(56, 49, 40, 0) 42%),
+    radial-gradient(88% 58% at 99% 6%, rgba(56, 49, 40, 0.04), rgba(56, 49, 40, 0) 38%),
+    radial-gradient(105% 70% at 93% 101%, rgba(56, 49, 40, 0.05), rgba(56, 49, 40, 0) 40%),
+    radial-gradient(78% 48% at 8% 98%, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 45%);
+  opacity: 0.8;
+}
+
+/* A creased sheet does not sit perfectly flat on the desk */
+.preview-pane .invoice-a4-sheet.paper-crumpled {
+  box-shadow:
+    0 18px 34px -12px rgba(15, 23, 42, 0.28),
+    0 4px 10px -4px rgba(15, 23, 42, 0.16);
+}
+
+/* ============================================================
+   TEMPLATE 2 — Shipping / Commerce invoice
+   ============================================================ */
+.invoice-a4-sheet.tpl-shipping {
+  border-top: none;
+  padding: 46px 48px 34px;
+  color: #0f172a;
+}
+
+.tpl2-page-content {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  transform-origin: top left;
+  will-change: transform;
+}
+
+.tpl2-navy {
+  color: #1e3a8a;
+}
+
+/* Header */
+.tpl2-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.tpl2-order-box {
+  border: 1px solid #dbe2ec;
+  border-radius: 0.5rem;
+  padding: 1.05rem 1.25rem;
+  background-color: #f8fafc;
+  min-width: 262px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tpl2-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #1e3a8a;
+  margin-bottom: 0.2rem;
+}
+
+.tpl2-value {
+  font-size: 0.85rem;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.tpl2-value-strong {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.tpl2-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.9rem;
+}
+
+.tpl2-logo {
+  max-width: 160px;
+  max-height: 46px;
+  object-fit: contain;
+}
+
+.tpl2-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #1e3a8a;
+  line-height: 1;
+}
+
+.tpl2-amount-badge {
+  background-color: #0b0f19;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  padding: 0.85rem 1.6rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+}
+
+.tpl2-rule {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 1.6rem 0;
+}
+
+/* Items table */
+.tpl2-items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tpl2-items-table th {
+  background-color: #eef1f7;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.8rem 1rem;
+}
+
+.tpl2-items-table td {
+  padding: 0.85rem 1rem;
+  font-size: 0.85rem;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.tpl2-items-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Addresses + totals */
+.tpl2-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+}
+
+.tpl2-section-heading {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #1e3a8a;
+  margin-bottom: 0.45rem;
+}
+
+.tpl2-address-text {
+  font-size: 0.82rem;
+  color: #334155;
+  line-height: 1.55;
+  white-space: pre-line;
+  min-height: 1.1rem;
+}
+
+.tpl2-address-text strong {
+  display: block;
+  color: #0f172a;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+}
+
+.tpl2-address-divider {
+  border-top: 1px dashed #cbd5e1;
+  margin: 1.15rem 0;
+}
+
+.tpl2-totals {
+  display: flex;
+  flex-direction: column;
+}
+
+.tpl2-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #eef1f7;
+  font-size: 0.85rem;
+}
+
+.tpl2-total-row span:first-child {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #334155;
+  font-size: 0.78rem;
+}
+
+.tpl2-total-row span:last-child {
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.tpl2-card {
+  letter-spacing: 0.02em;
+}
+
+.tpl2-card-mask {
+  letter-spacing: 0.12em;
+  color: #475569;
+  font-weight: 600;
+}
+
+.tpl2-balance span:last-child {
+  color: #b91c1c;
+}
+
+.tpl2-grand-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border: 2px solid #0b0f19;
+  border-radius: 0.55rem;
+  background-color: #f8fafc;
+  padding: 0.95rem 1.15rem;
+  margin-top: 1rem;
+}
+
+.tpl2-grand-total span:first-child {
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  color: #0b0f19;
+}
+
+.tpl2-grand-total span:last-child {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #0b0f19;
+  white-space: nowrap;
+}
+
+.tpl2-pay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.65rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #0b0f19;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tpl2-signature {
+  margin-top: 1.25rem;
+  text-align: right;
+}
+
+.tpl2-signature img {
+  max-height: 55px;
+  max-width: 180px;
+  object-fit: contain;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 0.25rem;
+}
+
+.tpl2-signature-label {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.3rem;
+  font-weight: 700;
+}
+
+/* Footer */
+.tpl2-footer-wrap {
+  margin-top: auto;
+}
+
+.tpl2-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.tpl2-footer-text {
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.tpl2-footer-bank {
+  text-align: right;
+  font-size: 0.78rem;
+  color: #1e293b;
+  line-height: 1.75;
+  text-transform: uppercase;
+  letter-spacing: 0.015em;
+  font-weight: 600;
+}
+
+.tpl2-footer-bank strong {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.tpl2-footnote {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.72rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* Template picker (editor sidebar) */
+.template-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.template-option {
+  border: 2px solid var(--border-color);
+  border-radius: 0.6rem;
+  background-color: var(--bg-card);
+  padding: 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.template-option:hover {
+  border-color: var(--accent-color);
+}
+
+.template-option.active {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.template-option-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.template-option-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.paper-texture-status {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.25rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.45rem;
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #047857;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.paper-texture-status svg {
+  flex: 0 0 auto;
+}
+
+/* Miniature preview drawn with divs — no images needed */
+.template-thumb {
+  height: 72px;
+  border-radius: 0.35rem;
+  border: 1px solid var(--border-color);
+  background-color: #ffffff;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.template-thumb .tt-bar {
+  height: 5px;
+  border-radius: 2px;
+  background-color: #cbd5e1;
+}
+
+.template-thumb .tt-accent {
+  background-color: #6366f1;
+}
+
+.template-thumb .tt-navy {
+  background-color: #1e3a8a;
+}
+
+.template-thumb .tt-dark {
+  background-color: #0b0f19;
+}
+
+.template-thumb .tt-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.template-thumb .tt-fill {
+  flex: 1;
+}
+
 /* Responsiveness */
 @media (max-width: 1100px) {
   .main-layout {
@@ -1367,4 +1841,3 @@ input, select, textarea {
   color: var(--text-main);
   font-size: 0.95rem;
 }
-

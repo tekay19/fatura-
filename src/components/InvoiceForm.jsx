@@ -1,5 +1,5 @@
-import React, { useRef } from "react";
-import { Plus, Trash2, Image, X, Settings, User, FileText, CheckCircle, Shield } from "lucide-react";
+import { useRef } from "react";
+import { Plus, Trash2, Image, X, Settings, User, FileText, CheckCircle, Shield, LayoutTemplate, Truck } from "lucide-react";
 import SignaturePad from "./SignaturePad";
 import PremiumToggle from "./PremiumToggle";
 
@@ -7,12 +7,18 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
   const fileInputRef = useRef(null);
   const isTurkey = lang === "tr";
   const isGermanic = lang === "de" || lang === "de-AT";
-  const isDanish = lang === "da";
-  const isEnglish = lang === "en";
+  const template = invoiceData.template || "classic";
+  const isShippingTemplate = template === "shipping";
 
   // Field change helper
   const handleFieldChange = (field, value) => {
     const newData = { ...invoiceData, [field]: value };
+
+    // The crumpled-paper look is the intended default for the shipping template
+    // and off for the corporate one; the checkbox below can still override it.
+    if (field === "template") {
+      newData.paperTexture = value === "shipping";
+    }
 
     // Auto-calculate Due Date if Invoice Date or Payment Terms changes
     if (field === "invoiceDate" || field === "paymentTerms") {
@@ -100,6 +106,192 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
 
   return (
     <div className="editor-pane">
+      {/* 0. Template Picker */}
+      <div className="form-card">
+        <h3>
+          <LayoutTemplate size={18} className="brand-icon" />
+          {t.templateLabel}
+        </h3>
+
+        <div className="template-picker">
+          <button
+            type="button"
+            className={`template-option ${template === "classic" ? "active" : ""}`}
+            onClick={() => handleFieldChange("template", "classic")}
+            aria-pressed={template === "classic"}
+            aria-label={t.templateClassic}
+          >
+            <div className="template-thumb">
+              <div className="tt-bar tt-accent" style={{ height: "3px" }} />
+              <div className="tt-row">
+                <div className="tt-bar" style={{ width: "28%" }} />
+                <div className="tt-fill" />
+                <div className="tt-bar tt-dark" style={{ width: "36%" }} />
+              </div>
+              <div className="tt-bar tt-dark" style={{ height: "8px" }} />
+              <div className="tt-bar" />
+              <div className="tt-bar" />
+              <div className="tt-row" style={{ marginTop: "auto" }}>
+                <div className="tt-fill" />
+                <div className="tt-bar" style={{ width: "46%" }} />
+              </div>
+            </div>
+            <div className="template-option-name">{t.templateClassic}</div>
+            <div className="template-option-desc">{t.templateClassicDesc}</div>
+          </button>
+
+          <button
+            type="button"
+            className={`template-option ${template === "shipping" ? "active" : ""}`}
+            onClick={() => handleFieldChange("template", "shipping")}
+            aria-pressed={template === "shipping"}
+            aria-label={t.templateShipping}
+          >
+            <div className="template-thumb">
+              <div className="tt-row" style={{ alignItems: "flex-start" }}>
+                <div style={{ width: "44%", height: "24px", border: "1px solid #e2e8f0", borderRadius: "3px" }} />
+                <div className="tt-fill" />
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end" }}>
+                  <div className="tt-bar tt-navy" style={{ width: "34px" }} />
+                  <div className="tt-bar tt-dark" style={{ width: "46px", height: "10px", borderRadius: "3px" }} />
+                </div>
+              </div>
+              <div className="tt-bar" style={{ height: "6px", backgroundColor: "#dfe5f0" }} />
+              <div className="tt-bar" />
+              <div className="tt-row" style={{ marginTop: "auto" }}>
+                <div className="tt-bar" style={{ width: "36%" }} />
+                <div className="tt-fill" />
+                <div style={{ width: "44%", height: "13px", border: "1.5px solid #0b0f19", borderRadius: "3px" }} />
+              </div>
+            </div>
+            <div className="template-option-name">{t.templateShipping}</div>
+            <div className="template-option-desc">{t.templateShippingDesc}</div>
+          </button>
+        </div>
+
+        {isShippingTemplate && (
+          <div className="paper-texture-status" role="status">
+            <CheckCircle size={17} aria-hidden="true" />
+            <span>{t.paperTexture} e-ticaret faturalarına otomatik uygulanır.</span>
+          </div>
+        )}
+      </div>
+
+      {/* 0b. Shipping template specific fields */}
+      {isShippingTemplate && (
+        <div className="form-card">
+          <h3>
+            <Truck size={18} className="brand-icon" />
+            {t.shippingSection}
+          </h3>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="shipping-carrier">{t.shippingCarrier}</label>
+              <input
+                id="shipping-carrier"
+                type="text"
+                className="form-control"
+                value={invoiceData.shippingCarrier || ""}
+                onChange={(e) => handleFieldChange("shippingCarrier", e.target.value)}
+                placeholder="UPS WORLDWIDE EXPRESS"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="shipping-recipient">{t.shippingRecipient}</label>
+              <input
+                id="shipping-recipient"
+                type="text"
+                className="form-control"
+                value={invoiceData.shippingName || ""}
+                onChange={(e) => handleFieldChange("shippingName", e.target.value)}
+                placeholder="ABC Fitness LLC"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="shipping-address">{t.shippingAddressField}</label>
+            <textarea
+              id="shipping-address"
+              className="form-control"
+              value={invoiceData.shippingAddress || ""}
+              onChange={(e) => handleFieldChange("shippingAddress", e.target.value)}
+              placeholder="1200 Brickell Ave, Miami, FL 33131"
+              autoComplete="shipping street-address"
+            />
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="card-brand">{t.cardBrand}</label>
+              <select
+                id="card-brand"
+                className="form-control"
+                value={invoiceData.cardBrand || ""}
+                onChange={(e) => handleFieldChange("cardBrand", e.target.value)}
+              >
+                <option value="">—</option>
+                <option value="VISA">VISA</option>
+                <option value="MASTERCARD">MASTERCARD</option>
+                <option value="AMEX">AMEX</option>
+                <option value="PAYPAL">PAYPAL</option>
+                <option value="BANK TRANSFER">BANK TRANSFER</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="card-last4">{t.cardLast4}</label>
+              <input
+                id="card-last4"
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                className="form-control"
+                value={invoiceData.cardLast4 || ""}
+                onChange={(e) => handleFieldChange("cardLast4", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="1550"
+              />
+            </div>
+          </div>
+
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="cs-phone">{t.customerServicePhone}</label>
+              <input
+                id="cs-phone"
+                type="tel"
+                className="form-control"
+                value={invoiceData.customerServicePhone || ""}
+                onChange={(e) => handleFieldChange("customerServicePhone", e.target.value)}
+                placeholder="1(800)-777-5706"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="bank-account-number">{t.bankAccountNumber}</label>
+              <input
+                id="bank-account-number"
+                type="text"
+                className="form-control"
+                value={invoiceData.bankAccountNumber || ""}
+                onChange={(e) => handleFieldChange("bankAccountNumber", e.target.value)}
+                placeholder="028 009 592"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="footer-note">{t.footerNoteLabel}</label>
+            <textarea
+              id="footer-note"
+              className="form-control"
+              value={invoiceData.footerNote || ""}
+              onChange={(e) => handleFieldChange("footerNote", e.target.value)}
+              placeholder="*All import duties, taxes, and clearance fees have been prepaid..."
+            />
+          </div>
+        </div>
+      )}
+
       {/* 1. Header & Title Settings */}
       <div className="form-card">
         <h3>
@@ -674,6 +866,19 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
               className="form-control"
               value={invoiceData.shipping}
               onChange={(e) => handleFieldChange("shipping", e.target.value)}
+              placeholder="0"
+              min="0"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="clearance-input">{t.clearanceFee}</label>
+            <input
+              id="clearance-input"
+              type="number"
+              className="form-control"
+              value={invoiceData.clearanceFee ?? 0}
+              onChange={(e) => handleFieldChange("clearanceFee", e.target.value)}
               placeholder="0"
               min="0"
             />
