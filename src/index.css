@@ -1803,56 +1803,6 @@ input, select, textarea {
   z-index: 2;
 }
 
-.slip-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.slip-actions button {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.7rem 0.35rem;
-  border: 1px solid #3a4b64;
-  border-radius: 0.5rem;
-  background-color: #22334b;
-  color: #e9eef5;
-  font-family: var(--font-sans);
-  font-size: 0.73rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
-}
-
-.slip-actions button:first-child {
-  border-color: #267d5d;
-  background-color: #247d5d;
-}
-
-.slip-actions button:hover {
-  transform: translateY(-1px);
-  border-color: #5bb6d5;
-}
-
-.slip-actions button:disabled {
-  opacity: 0.58;
-  cursor: wait;
-}
-
-.slip-save-state {
-  margin-top: 0.6rem;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid #2f765e;
-  border-radius: 0.4rem;
-  background-color: rgba(36, 125, 93, 0.16);
-  color: #9dd9c3;
-  font-size: 0.72rem;
-}
-
 .slip-editor-scroll {
   min-height: 0;
   overflow-y: auto;
@@ -2059,47 +2009,9 @@ input, select, textarea {
   flex-shrink: 0;
 }
 
-.slip-header-controls {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 1rem;
-}
-
-.slip-language-control {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.slip-language-control select {
-  min-width: 150px;
-  min-height: 40px;
-  padding: 0.55rem 2rem 0.55rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  outline: none;
-  background-color: var(--bg-card);
-  color: var(--text-main);
-  font-family: var(--font-sans);
-  font-size: 0.78rem !important;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.slip-language-control select:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
 .slip-workspace {
   min-height: 0;
-  height: calc(100dvh - 73px);
+  height: calc(100dvh - 76px);
   flex: 1;
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
@@ -2113,61 +2025,6 @@ input, select, textarea {
   background-color: var(--bg-sidebar);
   color: var(--text-main);
   box-shadow: none;
-}
-
-.slip-app-header .slip-actions {
-  width: auto;
-  display: flex;
-  grid-template-columns: none;
-  gap: 0.6rem;
-  margin: 0;
-}
-
-.slip-app-header .slip-actions button {
-  min-height: 40px;
-  padding: 0.62rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  background: var(--bg-card);
-  color: var(--text-main);
-  box-shadow: none;
-  font-size: 0.78rem;
-}
-
-.slip-app-header .slip-actions button:first-child {
-  border-color: var(--accent-color);
-  background: var(--accent-color);
-  color: #ffffff;
-}
-
-.slip-app-header .slip-actions button:last-child {
-  border-color: var(--success-color);
-  background: var(--success-color);
-  color: #ffffff;
-}
-
-.slip-app-header .slip-actions .slip-save-action {
-  border-color: var(--success-color);
-  background: var(--success-color);
-  color: #ffffff;
-}
-
-.slip-app-header .slip-actions .slip-refresh-action {
-  border-color: #f2b35e;
-  background: #fff7e8;
-  color: #9a5b08;
-}
-
-.slip-app-header .slip-actions button:hover {
-  border-color: var(--accent-hover);
-  transform: translateY(-1px);
-}
-
-.slip-save-state {
-  margin: 0.75rem 1.5rem 0;
-  border-color: #a7e3cc;
-  background: #ecfdf5;
-  color: #176b50;
 }
 
 .slip-editor-scroll {
@@ -2970,9 +2827,6 @@ input, select, textarea {
     flex-wrap: wrap;
   }
 
-  .slip-header-controls {
-    flex-wrap: wrap;
-  }
 }
 
 @media (max-width: 760px) {
@@ -2991,24 +2845,6 @@ input, select, textarea {
 
   .launcher-tool {
     min-height: 220px;
-  }
-
-  .slip-app-header {
-    align-items: stretch;
-  }
-
-  .slip-header-controls {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .slip-language-control {
-    justify-content: space-between;
-  }
-
-  .slip-app-header .slip-actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .slip-editor {
@@ -3359,6 +3195,24 @@ input, select, textarea {
   border-color: #9babbc;
   background: #f5f7fa;
   color: #172033;
+}
+
+.slip-command-bar .invoice-brand-mark {
+  background: #e8f3ee;
+  color: #267d5d;
+  box-shadow: inset 0 0 0 1px rgba(38, 125, 93, 0.1);
+}
+
+.slip-refresh-command {
+  border-color: #ebd7b7;
+  background: #fff9ef;
+  color: #99601b;
+}
+
+.slip-refresh-command:hover {
+  border-color: #d9b77e;
+  background: #fff3dc;
+  color: #7c4a0f;
 }
 
 .invoice-command-button:active,

@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, Download, Printer, Save, Plus, Trash2, Store, ReceiptText, Globe2, Barcode, Image, Sparkles, RefreshCw, Search, Type, CreditCard } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Download, Printer, Plus, Trash2, Store, ReceiptText, Globe2, Barcode, Image, Sparkles, RefreshCw, Search, Type, CreditCard, ChevronDown, Check } from "lucide-react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import PaperTexture from "./templates/PaperTexture";
@@ -71,14 +71,21 @@ const SLIP_COPY = {
 };
 
 const SLIP_LANGUAGES = [
-  ["tr", "Türkçe"], ["en", "English"], ["de", "Deutsch"], ["fr", "Français"],
-  ["it", "Italiano"], ["es", "Español"], ["pt", "Português"], ["nl", "Nederlands"],
-  ["da", "Dansk"], ["sv", "Svenska"]
+  { value: "tr", code: "TR", label: "Türkçe" },
+  { value: "en", code: "EN", label: "English" },
+  { value: "de", code: "DE", label: "Deutsch" },
+  { value: "fr", code: "FR", label: "Français" },
+  { value: "it", code: "IT", label: "Italiano" },
+  { value: "es", code: "ES", label: "Español" },
+  { value: "pt", code: "PT", label: "Português" },
+  { value: "nl", code: "NL", label: "Nederlands" },
+  { value: "da", code: "DA", label: "Dansk" },
+  { value: "sv", code: "SV", label: "Svenska" }
 ];
 
 const SLIP_UI = {
   tr: {
-    menu: "Menü", language: "Slip dili", preparing: "Hazırlanıyor", print: "Yazdır", save: "Kaydet", saved: "Slip kaydedildi",
+    menu: "Menü", language: "Slip dili", preparing: "Hazırlanıyor", print: "Yazdır",
     template: "Şablon", classicMarket: "Klasik market", storeInfo: "Mağaza bilgileri", storeName: "Mağaza adı", address: "Adres",
     phone: "Telefon", taxInfo: "Vergi bilgisi", uploadLogo: "Logo yükle", countryReceipt: "Ülke ve fiş bilgileri", country: "Ülke",
     receiptNo: "Fiş no", cashier: "Kasa", date: "Tarih", time: "Saat", products: "Ürünler", product: "ürün",
@@ -87,7 +94,7 @@ const SLIP_UI = {
     liveTotal: "Canlı toplam", paperTexture: "Kâğıt dokusu", yellowing: "Sarartı", crumpling: "Buruşukluk",
     crumpleStrength: "Buruşukluk yoğunluğu", soft: "Hafif", natural: "Doğal", strong: "Belirgin",
     independentEffects: "İki efekti birbirinden bağımsız kullanabilirsin.", livePreview: "Canlı önizleme", thermalSlip: "80 mm termal slip",
-    refresh: "Yenile", resetConfirm: "Slipteki tüm alanlar varsayılan değerlere dönsün mü?", resetDone: "Yeni slip numaraları ve barkod üretildi",
+    refresh: "Yenile",
     font: "Yazı fontu", courier: "Courier (Klasik fiş)", arial: "Arial (Orijinal)", ocr: "OCR Terminal", dicks: "Dick's", walmart: "Walmart",
     asinLookup: "ASIN ile mağaza bul", apiKey: "Anthropic API anahtarı", apiKeyPlaceholder: "sk-ant-…", asin: "ASIN", search: "Ara",
     asinRequired: "Geçerli, 10 karakterli bir ASIN gir.", asinOpened: "Amazon ürün sayfası açıldı.", storeNumber: "Mağaza numarası",
@@ -97,7 +104,7 @@ const SLIP_UI = {
     footerLine2: "İkinci satır", footerLine3: "Üçüncü satır", website: "Web sitesi"
   },
   en: {
-    menu: "Menu", language: "Slip language", preparing: "Preparing", print: "Print", save: "Save", saved: "Slip saved",
+    menu: "Menu", language: "Slip language", preparing: "Preparing", print: "Print",
     template: "Template", classicMarket: "Classic market", storeInfo: "Store information", storeName: "Store name", address: "Address",
     phone: "Phone", taxInfo: "Tax information", uploadLogo: "Upload logo", countryReceipt: "Country and receipt", country: "Country",
     receiptNo: "Receipt no", cashier: "Register", date: "Date", time: "Time", products: "Products", product: "product",
@@ -106,7 +113,7 @@ const SLIP_UI = {
     liveTotal: "Live total", paperTexture: "Paper texture", yellowing: "Yellowing", crumpling: "Crumpling",
     crumpleStrength: "Crumple intensity", soft: "Light", natural: "Natural", strong: "Pronounced",
     independentEffects: "Yellowing and crumpling can be used independently.", livePreview: "Live preview", thermalSlip: "80 mm thermal slip",
-    refresh: "Refresh", resetConfirm: "Reset every slip field to its default value?", resetDone: "New slip identifiers and barcode generated",
+    refresh: "Refresh",
     font: "Receipt font", courier: "Courier (Classic receipt)", arial: "Arial (Original)", ocr: "OCR Terminal", dicks: "Dick's", walmart: "Walmart",
     asinLookup: "Find store with ASIN", apiKey: "Anthropic API key", apiKeyPlaceholder: "sk-ant-…", asin: "ASIN", search: "Search",
     asinRequired: "Enter a valid 10-character ASIN.", asinOpened: "Amazon product page opened.", storeNumber: "Store number",
@@ -182,36 +189,6 @@ const DEFAULT_SLIP = {
   items: [
     { sku: "8374972793", description: "NIKE PRO MAX ULTRA SPORT SHIRT", quantity: 1, rate: 12.5 }
   ]
-};
-
-const readSavedSlip = () => {
-  try {
-    const savedDraft = localStorage.getItem("market_slip_draft");
-    if (!savedDraft) return DEFAULT_SLIP;
-
-    const saved = JSON.parse(savedDraft);
-    const source = saved.classicReferenceVersion === 1 ? saved : DEFAULT_SLIP;
-    const legacyPaperEffect = Boolean(source.paperTexture);
-    return {
-      ...DEFAULT_SLIP,
-      ...source,
-      footer: source.languageVersion === 1 ? source.footer : DEFAULT_SLIP.footer,
-      paperYellowing: source.paperYellowing ?? legacyPaperEffect,
-      paperCrumple: source.paperCrumple ?? legacyPaperEffect,
-      paperStrength: source.paperEffectVersion === 2 ? source.paperStrength : "soft",
-      paperEffectVersion: 2,
-      languageVersion: 1,
-      classicReferenceVersion: 1,
-      paymentStatus: source.paymentStatus ?? (source.language === "tr" ? SAMPLE_CONTENT.tr.paymentStatus : SAMPLE_CONTENT.en.paymentStatus),
-      footerSecondary: source.footerSecondary ?? (source.language === "tr" ? SAMPLE_CONTENT.tr.footerSecondary : SAMPLE_CONTENT.en.footerSecondary),
-      footerTertiary: source.footerTertiary ?? (source.language === "tr" ? SAMPLE_CONTENT.tr.footerTertiary : SAMPLE_CONTENT.en.footerTertiary),
-      items: Array.isArray(source.items)
-        ? source.items.map((item, index) => ({ sku: DEFAULT_SLIP.items[index]?.sku || "", ...item }))
-        : DEFAULT_SLIP.items
-    };
-  } catch {
-    return DEFAULT_SLIP;
-  }
 };
 
 function ReceiptPreview({ data }) {
@@ -313,16 +290,30 @@ function ReceiptPreview({ data }) {
 }
 
 export default function MarketSlipApp({ onBack }) {
-  const [data, setData] = useState(readSavedSlip);
+  const [data, setData] = useState(() => ({
+    ...DEFAULT_SLIP,
+    items: DEFAULT_SLIP.items.map((item) => ({ ...item }))
+  }));
   const [isGenerating, setIsGenerating] = useState(false);
-  const [saveState, setSaveState] = useState("");
   const [asinApiKey, setAsinApiKey] = useState("");
   const [asinMarket, setAsinMarket] = useState("US");
   const [asinValue, setAsinValue] = useState("");
   const [asinState, setAsinState] = useState("");
   const fileInputRef = useRef(null);
+  const languageMenuRef = useRef(null);
   const ui = data.language === "tr" ? SLIP_UI.tr : SLIP_UI.en;
   const activeCopy = SLIP_COPY[data.language] || SLIP_COPY.en;
+  const selectedLanguage = SLIP_LANGUAGES.find((option) => option.value === data.language) || SLIP_LANGUAGES[0];
+
+  useEffect(() => {
+    const closeLanguageMenu = (event) => {
+      const menu = languageMenuRef.current;
+      if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
+    };
+
+    document.addEventListener("pointerdown", closeLanguageMenu);
+    return () => document.removeEventListener("pointerdown", closeLanguageMenu);
+  }, []);
 
   const update = (field, value) => setData((previous) => ({ ...previous, [field]: value }));
   const updateItem = (index, field, value) => setData((previous) => ({
@@ -361,18 +352,17 @@ export default function MarketSlipApp({ onBack }) {
     });
   };
 
+  const selectLanguage = (language) => {
+    handleLanguageChange(language);
+    languageMenuRef.current?.removeAttribute("open");
+  };
+
   const handleLogo = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => update("logo", reader.result);
     reader.readAsDataURL(file);
-  };
-
-  const saveSlip = () => {
-    localStorage.setItem("market_slip_draft", JSON.stringify(data));
-    setSaveState(ui.saved);
-    window.setTimeout(() => setSaveState(""), 2200);
   };
 
   const refreshSlip = () => {
@@ -388,8 +378,6 @@ export default function MarketSlipApp({ onBack }) {
       date: now.toISOString().split("T")[0],
       time: now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
     }));
-    setSaveState(ui.resetDone);
-    window.setTimeout(() => setSaveState(""), 2200);
   };
 
   const searchAsin = () => {
@@ -434,32 +422,47 @@ export default function MarketSlipApp({ onBack }) {
 
   return (
     <div className="slip-app">
-      <header className="app-header slip-app-header">
-        <div className="brand-section">
+      <header className="app-header invoice-command-bar slip-app-header slip-command-bar">
+        <div className="brand-section invoice-command-brand">
           <button type="button" className="workspace-back-btn" onClick={onBack}><ArrowLeft size={17} /> {ui.menu}</button>
-          <ReceiptText className="brand-icon" size={27} />
-          <h1 className="brand-title">Market Slip</h1>
+          <span className="invoice-command-separator" aria-hidden="true" />
+          <span className="invoice-brand-mark" aria-hidden="true"><ReceiptText size={21} /></span>
         </div>
-        <div className="slip-header-controls">
-          <label className="slip-language-control">
-            <span>{ui.language}:</span>
-            <select value={data.language || "tr"} onChange={(event) => handleLanguageChange(event.target.value)}>
-              {SLIP_LANGUAGES.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
-            </select>
-          </label>
-          <div className="slip-actions">
-            <button type="button" onClick={downloadSlip} disabled={isGenerating}><Download size={17} /> {isGenerating ? ui.preparing : "PDF"}</button>
-            <button type="button" onClick={printSlip}><Printer size={17} /> {ui.print}</button>
-            <button type="button" className="slip-save-action" onClick={saveSlip}><Save size={17} /> {ui.save}</button>
-            <button type="button" className="slip-refresh-action" onClick={refreshSlip}><RefreshCw size={17} /> {ui.refresh}</button>
-          </div>
+        <div className="header-controls invoice-command-controls">
+          <details className="invoice-language-control" ref={languageMenuRef}>
+            <summary aria-label={`${ui.language}: ${selectedLanguage.label}`}>
+              <span><small>{ui.language}</small><strong>{selectedLanguage.code}</strong></span>
+              <ChevronDown size={14} aria-hidden="true" />
+            </summary>
+            <div className="invoice-language-menu" role="menu">
+              {SLIP_LANGUAGES.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={option.value === data.language ? "active" : ""}
+                  onClick={() => selectLanguage(option.value)}
+                  role="menuitemradio"
+                  aria-checked={option.value === data.language}
+                >
+                  <span>{option.code}</span>
+                  <strong>{option.label}</strong>
+                  {option.value === data.language && <Check size={14} aria-hidden="true" />}
+                </button>
+              ))}
+            </div>
+          </details>
+          <nav className="invoice-output-actions slip-command-actions" aria-label="Slip çıktı işlemleri">
+            <button type="button" className="invoice-pdf-button" onClick={downloadSlip} disabled={isGenerating} aria-label="PDF indir" title="PDF indir">
+              <Download size={17} /> <span>{isGenerating ? "…" : "PDF"}</span>
+            </button>
+            <button type="button" className="invoice-print-button" onClick={printSlip} aria-label={ui.print} title={ui.print}><Printer size={17} /></button>
+            <button type="button" className="invoice-print-button slip-refresh-command" onClick={refreshSlip} aria-label={ui.refresh} title={ui.refresh}><RefreshCw size={17} /></button>
+          </nav>
         </div>
       </header>
 
       <main className="slip-workspace">
       <aside className="slip-editor">
-        {saveState && <div className="slip-save-state" role="status">{saveState}</div>}
-
         <div className="slip-editor-scroll">
           <section className="slip-panel slip-template-panel">
             <div className="slip-panel-title"><ReceiptText size={17} /><strong>{ui.template}</strong></div>
