@@ -5,19 +5,6 @@
  */
 const crumpleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123" viewBox="0 0 794 1123">
   <defs>
-    <filter id="relief" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.0055 0.0072" numOctaves="4" seed="37" result="noise"/>
-      <feGaussianBlur in="noise" stdDeviation="2.4" result="bump"/>
-      <feDiffuseLighting in="bump" lighting-color="#fffdf7" surfaceScale="5.5" diffuseConstant="0.92">
-        <feDistantLight azimuth="228" elevation="43"/>
-      </feDiffuseLighting>
-    </filter>
-    <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.19" numOctaves="2" seed="11" result="fine"/>
-      <feDiffuseLighting in="fine" lighting-color="#fffdf8" surfaceScale="0.9" diffuseConstant="0.9">
-        <feDistantLight azimuth="228" elevation="50"/>
-      </feDiffuseLighting>
-    </filter>
     <filter id="soft-ridge" x="-10%" y="-10%" width="120%" height="120%">
       <feGaussianBlur stdDeviation="3.8"/>
     </filter>
@@ -32,7 +19,6 @@ const crumpleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="794" height="
   </defs>
 
   <rect width="794" height="1123" fill="#f7f0e2"/>
-  <rect width="794" height="1123" filter="url(#relief)" opacity="0.065"/>
 
   <!-- Angular crease networks radiate from irregular crush points. -->
   <g fill="none" stroke-linecap="round" filter="url(#soft-ridge)">
@@ -42,6 +28,10 @@ const crumpleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="794" height="
     <path d="M825 566 L704 600 L601 685 L517 639 L428 699 L340 667 M601 685 L657 805 L604 912 M601 685 L719 741 L834 707" stroke="#ffffff" stroke-width="8" opacity="0.25"/>
     <path d="M-20 1048 L91 1001 L191 911 L284 954 L378 886 M191 911 L158 795 L225 716 M191 911 L273 1031 L310 1160" stroke="#62594c" stroke-width="9" opacity="0.07"/>
     <path d="M-20 1042 L91 995 L191 905 L284 948 L378 880 M191 905 L158 789 L225 710 M191 905 L273 1025 L310 1154" stroke="#ffffff" stroke-width="7" opacity="0.23"/>
+    <path d="M332 -28 L417 39 L505 24 L566 113 L653 76 L824 122 M566 113 L502 184 L579 244 M566 113 L674 181 L770 162" stroke="#62594c" stroke-width="9" opacity="0.07"/>
+    <path d="M332 -34 L417 33 L505 18 L566 107 L653 70 L824 116 M566 107 L502 178 L579 238 M566 107 L674 175 L770 156" stroke="#ffffff" stroke-width="7" opacity="0.23"/>
+    <path d="M339 1154 L421 1058 L512 1074 L571 996 L651 1024 L830 958 M571 996 L504 918 L546 842 M571 996 L665 1091 L709 1164" stroke="#62594c" stroke-width="9" opacity="0.07"/>
+    <path d="M339 1148 L421 1052 L512 1068 L571 990 L651 1018 L830 952 M571 990 L504 912 L546 836 M571 990 L665 1085 L709 1158" stroke="#ffffff" stroke-width="7" opacity="0.23"/>
   </g>
 
   <!-- Short fracture lines add the brittle character of handled paper. -->
@@ -58,7 +48,6 @@ const crumpleSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="794" height="
     <path d="M164 142 L266 276 L229 391 L171 338Z"/><path d="M517 639 L601 685 L657 805 L604 912Z"/><path d="M158 789 L191 905 L273 1025 L225 710Z"/>
   </g>
 
-  <rect width="794" height="1123" filter="url(#grain)" opacity="0.014"/>
   <rect width="794" height="1123" fill="url(#edgeShade)"/>
 </svg>`;
 
@@ -82,6 +71,10 @@ const creaseOverlaySvg = `<svg xmlns="http://www.w3.org/2000/svg" width="794" he
     <path d="M825 566 L704 600 L601 685 L517 639 L428 699 L340 667 M601 685 L657 805 L604 912 M601 685 L719 741 L834 707" stroke="#fff" stroke-width="7" opacity=".32"/>
     <path d="M-20 1048 L91 1001 L191 911 L284 954 L378 886 M191 911 L158 795 L225 716 M191 911 L273 1031 L310 1160" stroke="#453d33" stroke-width="8" opacity=".1"/>
     <path d="M-20 1042 L91 995 L191 905 L284 948 L378 880 M191 905 L158 789 L225 710 M191 905 L273 1025 L310 1154" stroke="#fff" stroke-width="6" opacity=".3"/>
+    <path d="M332 -28 L417 39 L505 24 L566 113 L653 76 L824 122 M566 113 L502 184 L579 244 M566 113 L674 181 L770 162" stroke="#453d33" stroke-width="8" opacity=".1"/>
+    <path d="M332 -34 L417 33 L505 18 L566 107 L653 70 L824 116 M566 107 L502 178 L579 238 M566 107 L674 175 L770 156" stroke="#fff" stroke-width="6" opacity=".3"/>
+    <path d="M339 1154 L421 1058 L512 1074 L571 996 L651 1024 L830 958 M571 996 L504 918 L546 842 M571 996 L665 1091 L709 1164" stroke="#453d33" stroke-width="8" opacity=".1"/>
+    <path d="M339 1148 L421 1052 L512 1068 L571 990 L651 1018 L830 952 M571 990 L504 912 L546 836 M571 990 L665 1085 L709 1158" stroke="#fff" stroke-width="6" opacity=".3"/>
   </g>
   <g fill="none" stroke-linecap="round" filter="url(#edge)">
     <path d="M266 278 L306 208 L292 135 M266 278 L335 337 L397 345 M229 394 L176 430 L121 418" stroke="#4e4438" stroke-width="3.4" opacity=".19"/>
