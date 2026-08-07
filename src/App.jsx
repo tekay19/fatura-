@@ -284,6 +284,16 @@ export default function App() {
     document.body.classList.remove("dark-theme");
   }, []);
 
+  useEffect(() => {
+    const closeLanguageMenu = (event) => {
+      const menu = languageMenuRef.current;
+      if (menu?.open && !menu.contains(event.target)) menu.removeAttribute("open");
+    };
+
+    document.addEventListener("pointerdown", closeLanguageMenu);
+    return () => document.removeEventListener("pointerdown", closeLanguageMenu);
+  }, []);
+
   // Handle language switch
   const handleLangChange = (newLang) => {
     setLang(newLang);
@@ -588,9 +598,6 @@ export default function App() {
           <details
             className="invoice-language-control"
             ref={languageMenuRef}
-            onBlur={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.removeAttribute("open");
-            }}
           >
             <summary aria-label={`PDF dili: ${selectedPdfLanguage.label}`}>
               <span><small>PDF dili</small><strong>{selectedPdfLanguage.code}</strong></span>
