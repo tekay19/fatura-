@@ -1,18 +1,17 @@
 import { useLayoutEffect, useRef } from "react";
-import { CreditCard } from "lucide-react";
-import PaperTexture from "./PaperTexture";
 import {
   calculateTotals,
   formatMoney,
   getCurrencySymbol,
   formatDateShort
 } from "../../utils/calculations";
+import PaperTexture from "./PaperTexture";
 
 /**
  * Commerce / logistics style invoice: order summary box, black amount pill,
  * billing + shipping addresses and a boxed grand total.
  */
-export default function ShippingTemplate({ invoiceData, t, onPayClick, lang }) {
+export default function ShippingTemplate({ invoiceData, t, lang }) {
   const {
     title,
     logo,
@@ -26,23 +25,21 @@ export default function ShippingTemplate({ invoiceData, t, onPayClick, lang }) {
     shippingAddress,
     items,
     notes,
-    signature,
     currency,
     discount,
     discountType,
     tax,
     addTax,
-    isPaid,
-    acceptStripe,
-    stripeLink,
     cardBrand,
     cardLast4,
     customerServicePhone,
-    fromPhone,
     bankName,
     bankAccountNumber,
     bankAccountHolder,
-    footerNote
+    footerNote,
+    visualTheme = "modern",
+    paperTexture = false,
+    paperStrength = "soft"
   } = invoiceData;
 
   const sheetRef = useRef(null);
@@ -110,7 +107,6 @@ export default function ShippingTemplate({ invoiceData, t, onPayClick, lang }) {
     };
   }, [invoiceData, lang]);
 
-  const isTurkey = lang === "tr";
   const symbol = getCurrencySymbol(currency);
   const formatCurrency = (val) => formatMoney(val, currency);
 
@@ -131,17 +127,16 @@ export default function ShippingTemplate({ invoiceData, t, onPayClick, lang }) {
     ? `${total.toFixed(2)} ${symbol} ${currency}`
     : `${symbol} ${total.toFixed(2)} ${currency}`;
 
-  const servicePhone = customerServicePhone || fromPhone;
+  const servicePhone = customerServicePhone;
   const last4 = String(cardLast4 || "").slice(-4);
 
   return (
     <div
-      className="invoice-a4-sheet tpl-shipping paper-crumpled"
+      className={`invoice-a4-sheet tpl-shipping invoice-theme-${visualTheme}${paperTexture ? ` paper-crumpled invoice-crumple-${paperStrength}` : ""}`}
       ref={sheetRef}
       id="invoice-capture-area"
     >
-      <PaperTexture />
-
+      {paperTexture && <PaperTexture />}
       <div className="tpl2-page-content" ref={contentRef}>
 
         {/* Order summary box + title / amount badge */}
@@ -223,7 +218,7 @@ export default function ShippingTemplate({ invoiceData, t, onPayClick, lang }) {
           </div>
 
           {notes && (
-            <div className="tpl2-address-block" style={{ marginTop: "0.75rem" }}>
+            <div className="tpl2-address-block tpl2-notes-block" style={{ marginTop: "0.75rem" }}>
               <h5 className="tpl2-section-heading">{t.notes}</h5>
               <div className="tpl2-address-text">{notes}</div>
             </div>
@@ -292,33 +287,6 @@ export default function ShippingTemplate({ invoiceData, t, onPayClick, lang }) {
             <span>{formatCurrency(total)}</span>
           </div>
 
-          {!isPaid && acceptStripe && !isTurkey && (
-            <div className="pdf-no-print" style={{ marginTop: "0.75rem" }}>
-              {stripeLink ? (
-                <a
-                  href={stripeLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tpl2-pay-btn"
-                >
-                  <CreditCard size={14} />
-                  {t.payInvoice}
-                </a>
-              ) : (
-                <button type="button" onClick={onPayClick} className="tpl2-pay-btn">
-                  <CreditCard size={14} />
-                  {t.payInvoice}
-                </button>
-              )}
-            </div>
-          )}
-
-          {signature && (
-            <div className="tpl2-signature">
-              <img src={signature} alt="Signature" />
-              <div className="tpl2-signature-label">{t.signature}</div>
-            </div>
-          )}
         </div>
         </div>
 

@@ -1,45 +1,32 @@
-import { useRef } from "react";
-import { Plus, Trash2, Image, X, Settings, User, FileText, CheckCircle, Shield, LayoutTemplate, Truck } from "lucide-react";
-import SignaturePad from "./SignaturePad";
-import PremiumToggle from "./PremiumToggle";
+import { useRef, useState } from "react";
+import { Plus, Trash2, Image, X, Settings, User, FileText, Truck, Palette, Search, ExternalLink, RefreshCw } from "lucide-react";
 
-export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
+const generateInvoiceNumber = () => {
+  const randomValue = new Uint32Array(1);
+  window.crypto.getRandomValues(randomValue);
+  const suffix = String(randomValue[0] % 1000000).padStart(6, "0");
+  return `INV-${new Date().getFullYear()}-${suffix}`;
+};
+
+export default function InvoiceForm({ invoiceData, onChange, t }) {
   const fileInputRef = useRef(null);
-  const isTurkey = lang === "tr";
-  const isGermanic = lang === "de" || lang === "de-AT";
-  const template = invoiceData.template || "classic";
-  const isShippingTemplate = template === "shipping";
+  const [asin, setAsin] = useState("");
+  const [asinMarket, setAsinMarket] = useState("com");
+  const [asinError, setAsinError] = useState("");
+  const visualTheme = invoiceData.visualTheme || "modern";
+
+  const invoiceThemes = [
+    { id: "modern", label: "Modern Grid", color: "#259ac4" },
+    { id: "dark", label: "Koyu başlık", color: "#172338" },
+    { id: "purple", label: "Mor editoryal", color: "#7957c8" },
+    { id: "green", label: "Yeşil kartlar", color: "#27845f" },
+    { id: "minimal", label: "Minimal çizgi", color: "#7b8491" },
+    { id: "red", label: "Güçlü kırmızı", color: "#ba3f45" }
+  ];
 
   // Field change helper
   const handleFieldChange = (field, value) => {
     const newData = { ...invoiceData, [field]: value };
-
-    // The crumpled-paper look is the intended default for the shipping template
-    // and off for the corporate one; the checkbox below can still override it.
-    if (field === "template") {
-      newData.paperTexture = value === "shipping";
-    }
-
-    // Auto-calculate Due Date if Invoice Date or Payment Terms changes
-    if (field === "invoiceDate" || field === "paymentTerms") {
-      const dateStr = field === "invoiceDate" ? value : invoiceData.invoiceDate;
-      const terms = field === "paymentTerms" ? value : invoiceData.paymentTerms;
-      
-      if (dateStr && terms !== "custom") {
-        const dateObj = new Date(dateStr);
-        if (!isNaN(dateObj.getTime())) {
-          if (terms === "30") {
-            dateObj.setDate(dateObj.getDate() + 30);
-            newData.dueDate = dateObj.toISOString().split("T")[0];
-          } else if (terms === "60") {
-            dateObj.setDate(dateObj.getDate() + 60);
-            newData.dueDate = dateObj.toISOString().split("T")[0];
-          } else if (terms === "receipt") {
-            newData.dueDate = dateStr;
-          }
-        }
-      }
-    }
 
     onChange(newData);
   };
@@ -104,82 +91,102 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
     handleFieldChange("items", newItems);
   };
 
+  const openAsin = () => {
+    const normalized = asin.trim().toUpperCase();
+    if (!/^[A-Z0-9]{10}$/.test(normalized)) {
+      setAsinError("ASIN 10 harf/rakamdan oluşmalıdır.");
+      return;
+    }
+    setAsinError("");
+    const target = window.open(`https://www.amazon.${asinMarket}/dp/${normalized}`, "_blank", "noopener,noreferrer");
+    if (target) target.opener = null;
+  };
+
   return (
     <div className="editor-pane">
-      {/* 0. Template Picker */}
+      {/* 0. Appearance settings — the invoice layout is fixed to commerce. */}
       <div className="form-card">
         <h3>
-          <LayoutTemplate size={18} className="brand-icon" />
-          {t.templateLabel}
+          <Palette size={18} className="brand-icon" />
+          Fatura görünümü
         </h3>
 
-        <div className="template-picker">
-          <button
-            type="button"
-            className={`template-option ${template === "classic" ? "active" : ""}`}
-            onClick={() => handleFieldChange("template", "classic")}
-            aria-pressed={template === "classic"}
-            aria-label={t.templateClassic}
-          >
-            <div className="template-thumb">
-              <div className="tt-bar tt-accent" style={{ height: "3px" }} />
-              <div className="tt-row">
-                <div className="tt-bar" style={{ width: "28%" }} />
-                <div className="tt-fill" />
-                <div className="tt-bar tt-dark" style={{ width: "36%" }} />
-              </div>
-              <div className="tt-bar tt-dark" style={{ height: "8px" }} />
-              <div className="tt-bar" />
-              <div className="tt-bar" />
-              <div className="tt-row" style={{ marginTop: "auto" }}>
-                <div className="tt-fill" />
-                <div className="tt-bar" style={{ width: "46%" }} />
-              </div>
-            </div>
-            <div className="template-option-name">{t.templateClassic}</div>
-            <div className="template-option-desc">{t.templateClassicDesc}</div>
-          </button>
-
-          <button
-            type="button"
-            className={`template-option ${template === "shipping" ? "active" : ""}`}
-            onClick={() => handleFieldChange("template", "shipping")}
-            aria-pressed={template === "shipping"}
-            aria-label={t.templateShipping}
-          >
-            <div className="template-thumb">
-              <div className="tt-row" style={{ alignItems: "flex-start" }}>
-                <div style={{ width: "44%", height: "24px", border: "1px solid #e2e8f0", borderRadius: "3px" }} />
-                <div className="tt-fill" />
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end" }}>
-                  <div className="tt-bar tt-navy" style={{ width: "34px" }} />
-                  <div className="tt-bar tt-dark" style={{ width: "46px", height: "10px", borderRadius: "3px" }} />
-                </div>
-              </div>
-              <div className="tt-bar" style={{ height: "6px", backgroundColor: "#dfe5f0" }} />
-              <div className="tt-bar" />
-              <div className="tt-row" style={{ marginTop: "auto" }}>
-                <div className="tt-bar" style={{ width: "36%" }} />
-                <div className="tt-fill" />
-                <div style={{ width: "44%", height: "13px", border: "1.5px solid #0b0f19", borderRadius: "3px" }} />
-              </div>
-            </div>
-            <div className="template-option-name">{t.templateShipping}</div>
-            <div className="template-option-desc">{t.templateShippingDesc}</div>
-          </button>
+        <div className="invoice-theme-block">
+          <div className="invoice-theme-heading"><Palette size={16} /> Renk ve görünüm</div>
+          <div className="invoice-theme-picker" aria-label="Fatura tasarımı">
+            {invoiceThemes.map((themeOption) => (
+              <button
+                key={themeOption.id}
+                type="button"
+                className={visualTheme === themeOption.id ? "active" : ""}
+                onClick={() => handleFieldChange("visualTheme", themeOption.id)}
+                aria-pressed={visualTheme === themeOption.id}
+              >
+                <span style={{ "--theme-swatch": themeOption.color }} />
+                {themeOption.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {isShippingTemplate && (
-          <div className="paper-texture-status" role="status">
-            <CheckCircle size={17} aria-hidden="true" />
-            <span>{t.paperTexture} e-ticaret faturalarına otomatik uygulanır.</span>
-          </div>
-        )}
+        <div className="invoice-paper-controls">
+          <label className="invoice-paper-toggle">
+            <input
+              type="checkbox"
+              checked={Boolean(invoiceData.paperTexture)}
+              onChange={(event) => handleFieldChange("paperTexture", event.target.checked)}
+            />
+            <span>
+              <strong>Hafif sarartı ve buruşukluk</strong>
+              <small>A4 ve PDF sınırlarını değiştirmeden doğal kâğıt dokusu uygular.</small>
+            </span>
+          </label>
+          <label className="invoice-paper-strength">
+            Yoğunluk
+            <select
+              className="form-control"
+              value={invoiceData.paperStrength || "soft"}
+              onChange={(event) => handleFieldChange("paperStrength", event.target.value)}
+              disabled={!invoiceData.paperTexture}
+            >
+              <option value="soft">Hafif</option>
+              <option value="natural">Doğal</option>
+              <option value="strong">Belirgin</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div className="form-card asin-tool-card">
+        <h3><Search size={18} className="brand-icon" /> ASIN ürün araştırması</h3>
+        <p>Amazon ürün sayfasını ASIN koduyla doğru ülke mağazasında açın.</p>
+        <div className="asin-tool-row">
+          <input
+            type="text"
+            className="form-control"
+            value={asin}
+            onChange={(event) => {
+              setAsin(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10));
+              setAsinError("");
+            }}
+            placeholder="Örn. B0D7Q9K2LM"
+            aria-label="ASIN kodu"
+          />
+          <select className="form-control" value={asinMarket} onChange={(event) => setAsinMarket(event.target.value)} aria-label="Amazon mağazası">
+            <option value="com">Amazon.com</option>
+            <option value="com.tr">Amazon.com.tr</option>
+            <option value="de">Amazon.de</option>
+            <option value="co.uk">Amazon.co.uk</option>
+            <option value="it">Amazon.it</option>
+            <option value="es">Amazon.es</option>
+          </select>
+          <button type="button" className="asin-open-btn" onClick={openAsin}><ExternalLink size={16} /> Aç</button>
+        </div>
+        {asinError && <span className="asin-error" role="alert">{asinError}</span>}
       </div>
 
       {/* 0b. Shipping template specific fields */}
-      {isShippingTemplate && (
-        <div className="form-card">
+      <div className="form-card">
           <h3>
             <Truck size={18} className="brand-icon" />
             {t.shippingSection}
@@ -279,6 +286,31 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
             </div>
           </div>
 
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label htmlFor="bank-name">{t.bankName}</label>
+              <input
+                id="bank-name"
+                type="text"
+                className="form-control"
+                value={invoiceData.bankName || ""}
+                onChange={(e) => handleFieldChange("bankName", e.target.value)}
+                placeholder="Bank of America"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="bank-account-holder">{t.bankAccountHolder}</label>
+              <input
+                id="bank-account-holder"
+                type="text"
+                className="form-control"
+                value={invoiceData.bankAccountHolder || ""}
+                onChange={(e) => handleFieldChange("bankAccountHolder", e.target.value)}
+                placeholder="Atlas Teknoloji"
+              />
+            </div>
+          </div>
+
           <div className="form-group">
             <label htmlFor="footer-note">{t.footerNoteLabel}</label>
             <textarea
@@ -289,8 +321,7 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
               placeholder="*All import duties, taxes, and clearance fees have been prepaid..."
             />
           </div>
-        </div>
-      )}
+      </div>
 
       {/* 1. Header & Title Settings */}
       <div className="form-card">
@@ -334,14 +365,26 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
 
           <div className="form-group">
             <label htmlFor="invoice-number">{t.invoiceNumber}</label>
-            <input
-              id="invoice-number"
-              type="text"
-              className="form-control"
-              value={invoiceData.invoiceNumber}
-              onChange={(e) => handleFieldChange("invoiceNumber", e.target.value)}
-              placeholder="INV-2026-001"
-            />
+            <div className="invoice-number-control">
+              <input
+                id="invoice-number"
+                type="text"
+                className="form-control"
+                value={invoiceData.invoiceNumber}
+                onChange={(e) => handleFieldChange("invoiceNumber", e.target.value)}
+                placeholder="INV-2026-001"
+              />
+              <button
+                type="button"
+                className="invoice-number-generate"
+                onClick={() => handleFieldChange("invoiceNumber", generateInvoiceNumber())}
+                title="Rastgele fatura numarası üret"
+                aria-label="Rastgele fatura numarası üret"
+              >
+                <RefreshCw size={15} />
+                Üret
+              </button>
+            </div>
           </div>
         </div>
 
@@ -389,14 +432,14 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
         </div>
       </div>
 
-      {/* 2. Dates & Terms */}
+      {/* 2. Invoice date */}
       <div className="form-card">
         <h3>
           <Settings size={18} className="brand-icon" />
-          {t.invoiceDate} & {t.dueDate}
+          {t.invoiceDate}
         </h3>
-        
-        <div className="form-grid-3">
+
+        <div className="form-grid-2">
           <div className="form-group">
             <label htmlFor="invoice-date">{t.invoiceDate}</label>
             <input
@@ -406,222 +449,6 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
               value={invoiceData.invoiceDate}
               onChange={(e) => handleFieldChange("invoiceDate", e.target.value)}
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="payment-terms">{t.paymentTerms}</label>
-            <select
-              id="payment-terms"
-              className="form-control"
-              value={invoiceData.paymentTerms}
-              onChange={(e) => handleFieldChange("paymentTerms", e.target.value)}
-            >
-              <option value="receipt">{t.dueOnReceipt}</option>
-              <option value="30">30 {t.days}</option>
-              <option value="60">60 {t.days}</option>
-              <option value="custom">{t.custom}</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="due-date">{t.dueDate}</label>
-            <input
-              id="due-date"
-              type="date"
-              className="form-control"
-              value={invoiceData.dueDate}
-              onChange={(e) => handleFieldChange("dueDate", e.target.value)}
-              disabled={invoiceData.paymentTerms !== "custom"}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Credit Card Accept (Stripe) & Bank Details */}
-      <PremiumToggle invoiceData={invoiceData} onChange={onChange} t={t} lang={lang} />
-
-      {/* 4. Sender Details (From) */}
-      <div className="form-card">
-        <h3>
-          <User size={18} className="brand-icon" />
-          {t.from}
-        </h3>
-        
-        <div className="form-grid-2">
-          <div className="form-group">
-            <label htmlFor="from-name">{t.companyName}</label>
-            <input
-              id="from-name"
-              type="text"
-              className="form-control"
-              value={invoiceData.fromName}
-              onChange={(e) => handleFieldChange("fromName", e.target.value)}
-              placeholder="Atlas Software"
-              autoComplete="name"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="from-email">{t.email}</label>
-            <input
-              id="from-email"
-              type="email"
-              className="form-control"
-              value={invoiceData.fromEmail}
-              onChange={(e) => handleFieldChange("fromEmail", e.target.value)}
-              placeholder="billing@atlas-software.example"
-              autoComplete="email"
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="from-address">{t.address}</label>
-          <textarea
-            id="from-address"
-            className="form-control"
-            value={invoiceData.fromAddress}
-            onChange={(e) => handleFieldChange("fromAddress", e.target.value)}
-            placeholder="Aksaray / Türkiye"
-            autoComplete="street-address"
-          />
-        </div>
-
-        <div className="form-grid-2">
-          <div className="form-group">
-            <label htmlFor="from-website">{t.website}</label>
-            <input
-              id="from-website"
-              type="url"
-              className="form-control"
-              value={invoiceData.fromWebsite}
-              onChange={(e) => handleFieldChange("fromWebsite", e.target.value)}
-              placeholder="www.atlas-software.example"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="from-phone">{t.phone}</label>
-            <input
-              id="from-phone"
-              type="tel"
-              className="form-control"
-              value={invoiceData.fromPhone}
-              onChange={(e) => handleFieldChange("fromPhone", e.target.value)}
-              placeholder="+90 555 555 55 55"
-              autoComplete="tel"
-            />
-          </div>
-        </div>
-
-        {/* Dynamic Compliance Fields (From) */}
-        <div className="compliance-fields-area" style={{ 
-          borderTop: "1px dashed var(--border-color)", 
-          paddingTop: "1rem", 
-          marginTop: "0.5rem" 
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem", color: "var(--text-muted)" }}>
-            <Shield size={14} />
-            <span style={{ fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {t.legalNotice}
-            </span>
-          </div>
-
-          <div className="form-grid-2">
-            {/* Tax Number / VAT ID */}
-            <div className="form-group">
-              <label htmlFor="from-vatid">{t.vatId}</label>
-              <input
-                id="from-vatid"
-                type="text"
-                className="form-control"
-                value={invoiceData.fromVatId || ""}
-                onChange={(e) => handleFieldChange("fromVatId", e.target.value)}
-                placeholder={isTurkey ? "Vergi/TCKN No" : "ATU12345678 / DE123456789 / DK12345678"}
-              />
-            </div>
-
-            {/* Registration Number */}
-            <div className="form-group">
-              <label htmlFor="from-regno">{t.companyRegNo}</label>
-              <input
-                id="from-regno"
-                type="text"
-                className="form-control"
-                value={invoiceData.fromRegNo || ""}
-                onChange={(e) => handleFieldChange("fromRegNo", e.target.value)}
-                placeholder={isTurkey ? "Ticaret Sicil No" : "FN 123456 x / HRB 1234"}
-              />
-            </div>
-
-            {/* Turkey specific: Tax Office / MERSIS */}
-            {isTurkey && (
-              <>
-                <div className="form-group">
-                  <label htmlFor="from-taxoffice">{t.taxOffice}</label>
-                  <input
-                    id="from-taxoffice"
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.fromTaxOffice || ""}
-                    onChange={(e) => handleFieldChange("fromTaxOffice", e.target.value)}
-                    placeholder="Aksaray Vergi Dairesi"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="from-mersis">{t.mersisNo}</label>
-                  <input
-                    id="from-mersis"
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.fromMersis || ""}
-                    onChange={(e) => handleFieldChange("fromMersis", e.target.value)}
-                    placeholder="0123-4567-8901-2345"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Germanic specific: Tax Office / Jurisdiction */}
-            {isGermanic && (
-              <>
-                <div className="form-group">
-                  <label htmlFor="from-taxoffice">{t.taxOffice}</label>
-                  <input
-                    id="from-taxoffice"
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.fromTaxOffice || ""}
-                    onChange={(e) => handleFieldChange("fromTaxOffice", e.target.value)}
-                    placeholder="Finanzamt Wien / Berlin"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="from-jurisdiction">Gerichtsstand (Jurisdiction Court)</label>
-                  <input
-                    id="from-jurisdiction"
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.fromJurisdiction || ""}
-                    onChange={(e) => handleFieldChange("fromJurisdiction", e.target.value)}
-                    placeholder="Handelsgericht Wien"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Managing Director for EU/International (legally required for companies) */}
-            {!isTurkey && (
-              <div className="form-group">
-                <label htmlFor="from-director">{t.managingDirector}</label>
-                <input
-                  id="from-director"
-                  type="text"
-                  className="form-control"
-                  value={invoiceData.fromDirector || ""}
-                  onChange={(e) => handleFieldChange("fromDirector", e.target.value)}
-                  placeholder="John Doe"
-                />
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -672,49 +499,6 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
           />
         </div>
 
-        {/* Dynamic Compliance Fields (To) */}
-        <div className="compliance-fields-area" style={{ 
-          borderTop: "1px dashed var(--border-color)", 
-          paddingTop: "1rem", 
-          marginTop: "0.5rem" 
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.75rem", color: "var(--text-muted)" }}>
-            <Shield size={14} />
-            <span style={{ fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {t.billTo} {t.legalNotice}
-            </span>
-          </div>
-
-          <div className="form-grid-2">
-            {/* Recipient VAT ID / Tax Number */}
-            <div className="form-group">
-              <label htmlFor="to-vatid">{t.vatId} ({t.billTo})</label>
-              <input
-                id="to-vatid"
-                type="text"
-                className="form-control"
-                value={invoiceData.toVatId || ""}
-                onChange={(e) => handleFieldChange("toVatId", e.target.value)}
-                placeholder={isTurkey ? "Vergi/TCKN No" : "KDV No / VAT ID"}
-              />
-            </div>
-            
-            {/* Recipient Reg Number / CVR */}
-            {!isTurkey && (
-              <div className="form-group">
-                <label htmlFor="to-regno">{t.companyRegNo} ({t.billTo})</label>
-                <input
-                  id="to-regno"
-                  type="text"
-                  className="form-control"
-                  value={invoiceData.toRegNo || ""}
-                  onChange={(e) => handleFieldChange("toRegNo", e.target.value)}
-                  placeholder="Registration Number"
-                />
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* 6. Invoice Items Table */}
@@ -913,24 +697,11 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
         </div>
       </div>
 
-      {/* 8. Signature Pad */}
-      <div className="form-card">
-        <h3>
-          <CheckCircle size={18} className="brand-icon" />
-          {t.signature}
-        </h3>
-        <SignaturePad
-          value={invoiceData.signature}
-          onChange={(sig) => handleFieldChange("signature", sig)}
-          t={t}
-        />
-      </div>
-
-      {/* 9. Notes & Terms */}
+      {/* 8. Notes */}
       <div className="form-card">
         <h3>
           <FileText size={18} className="brand-icon" />
-          {t.notes} & {t.terms}
+          {t.notes}
         </h3>
         
         <div className="form-group">
@@ -944,16 +715,6 @@ export default function InvoiceForm({ invoiceData, onChange, t, lang }) {
           />
         </div>
 
-        <div className="form-group">
-          <label htmlFor="terms-area">{t.terms}</label>
-          <textarea
-            id="terms-area"
-            className="form-control"
-            value={invoiceData.terms}
-            onChange={(e) => handleFieldChange("terms", e.target.value)}
-            placeholder="Payment due within 30 days."
-          />
-        </div>
       </div>
     </div>
   );

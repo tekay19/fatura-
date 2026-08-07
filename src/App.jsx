@@ -1,16 +1,20 @@
 import { useState, useEffect, useRef } from "react";
-import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen } from "lucide-react";
+import { Download, Receipt, History, FileText, Plus, Save, Trash2, FolderOpen, ArrowLeft, Printer } from "lucide-react";
 import { translations } from "./components/translations";
 import InvoiceForm from "./components/InvoiceForm";
 import InvoicePreview from "./components/InvoicePreview";
-import StripeCheckout from "./components/StripeCheckout";
+import MarketSlipApp from "./components/MarketSlipApp";
+import ToolLauncher from "./components/ToolLauncher";
 import { calculateTotals, getCurrencySymbol } from "./utils/calculations";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 
-// html2canvas can collapse ordinary U+0020 spaces in Safari/WebKit and some
-// font configurations. Keep the visual space as NBSP while adding <wbr> so
-// long notes and addresses can still wrap naturally in the export clone.
+const initialInvoiceDate = new Date();
+const INITIAL_INVOICE_DATE = initialInvoiceDate.toISOString().split("T")[0];
+
+// Safari/WebKit can discard the width of ordinary spaces while html2canvas
+// measures text. Give every word gap a real inline-box width in the export
+// clone; <wbr> keeps notes and addresses free to wrap at those gaps.
 const preserveCanvasSpaces = (root) => {
   const doc = root.ownerDocument;
   const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -30,7 +34,10 @@ const preserveCanvasSpaces = (root) => {
     parts.forEach((part, index) => {
       if (part) fragment.appendChild(doc.createTextNode(part));
       if (index < parts.length - 1) {
-        fragment.appendChild(doc.createTextNode("\u00a0"));
+        const spacer = doc.createElement("i");
+        spacer.className = "pdf-word-space";
+        spacer.setAttribute("aria-hidden", "true");
+        fragment.appendChild(spacer);
         fragment.appendChild(doc.createElement("wbr"));
       }
     });
@@ -39,227 +46,134 @@ const preserveCanvasSpaces = (root) => {
   });
 };
 
-// Helper to get default editable values per language (including yasal compliance defaults)
+// Only fields rendered by the current commerce invoice are localized here.
 const getLanguageDefaults = (lang) => {
   switch (lang) {
     case "tr":
       return {
         title: "Fatura",
-        fromName: "Atlas Teknoloji",
-        fromEmail: "billing@atlas-software.example",
-        fromAddress: "New York / ABD",
-        fromWebsite: "www.atlas-software.example",
-        fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness LLC",
         toEmail: "john@abcfitness.com",
         toAddress: "Miami, Florida",
         notes: "İş ortaklığınız için teşekkür ederiz.",
-        terms: "Ödeme fatura tarihinden itibaren 30 gün içinde yapılmalıdır.",
         currency: "TRY",
         footerNote: "*Tüm gümrük vergileri, harçlar ve işlem ücretleri, ithalatçı adına taşıyıcı firma tarafından önceden tahsil edilmiştir.",
-        // TR Compliance
-        fromVatId: "3240892018",
-        fromRegNo: "389201",
-        fromTaxOffice: "New York Vergi Dairesi",
-        fromMersis: "0324-0892-0180-0012",
-        toVatId: "4791028374",
-        toRegNo: "",
         bankName: "Garanti BBVA",
         bankAccountHolder: "Atlas Teknoloji ve Danışmanlık",
-        bankIban: "TR56 0006 2000 0001 2345 6789 01",
-        bankBic: ""
+        customerServicePhone: "+90 555 555 55 55"
       };
     case "de":
       return {
         title: "Rechnung",
-        fromName: "Atlas Software GmbH",
-        fromEmail: "billing@atlas-software.example",
-        fromAddress: "New York / USA",
-        fromWebsite: "www.atlas-software.example",
-        fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness GmbH",
         toEmail: "john@abcfitness.com",
         toAddress: "München, Deutschland",
         notes: "Vielen Dank für Ihre geschätzte Zusammenarbeit.",
-        terms: "Zahlbar innerhalb von 30 Tagen ohne Abzug.",
         currency: "EUR",
         footerNote: "*Alle Einfuhrzölle, Steuern und Abfertigungsgebühren wurden im Namen des Importeurs vom Frachtführer vorab erhoben.",
-        // DE Compliance
-        fromVatId: "DE324089201",
-        fromRegNo: "HRB 10293 B",
-        fromTaxOffice: "Finanzamt Berlin-Mitte",
-        fromJurisdiction: "Amtsgericht Berlin",
-        fromDirector: "John Doe",
-        toVatId: "DE749102837",
-        toRegNo: "HRB 9912",
         bankName: "Deutsche Bank",
         bankAccountHolder: "Atlas Software GmbH",
-        bankIban: "DE89 3704 0044 0532 0130 00",
-        bankBic: "DEUTDEDDFXX"
+        customerServicePhone: "+49 30 555555"
       };
     case "de-AT":
       return {
         title: "Rechnung",
-        fromName: "Atlas Software GmbH",
-        fromEmail: "billing@atlas-software.example",
-        fromAddress: "New York / USA",
-        fromWebsite: "www.atlas-software.example",
-        fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness GmbH",
         toEmail: "john@abcfitness.com",
         toAddress: "Wien, Österreich",
         notes: "Vielen Dank für Ihren Auftrag.",
-        terms: "Zahlungsziel 30 Tage ab Rechnungsdatum.",
         currency: "EUR",
         footerNote: "*Alle Einfuhrzölle, Steuern und Abfertigungsgebühren wurden im Namen des Importeurs vom Frachtführer vorab erhoben.",
-        // AT Compliance
-        fromVatId: "ATU76543210",
-        fromRegNo: "FN 987654 y",
-        fromTaxOffice: "Finanzamt Österreich",
-        fromJurisdiction: "Handelsgericht Wien",
-        fromDirector: "Dr. Johann Schmidt",
-        toVatId: "ATU12345678",
-        toRegNo: "FN 112233 t",
         bankName: "Erste Bank",
         bankAccountHolder: "Atlas Software GmbH",
-        bankIban: "AT12 2011 1000 1234 5678",
-        bankBic: "EBANKATWWXXX"
+        customerServicePhone: "+43 1 555555"
       };
     case "da":
       return {
         title: "Faktura",
-        fromName: "Atlas Software ApS",
-        fromEmail: "billing@atlas-software.example",
-        fromAddress: "New York / USA",
-        fromWebsite: "www.atlas-software.example",
-        fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness ApS",
         toEmail: "john@abcfitness.com",
         toAddress: "København, Danmark",
         notes: "Mange tak for din bestilling og dit samarbejde.",
-        terms: "Betalingsbetingelser: Netto 30 dage.",
         currency: "DKK",
         footerNote: "*Al importtold, alle afgifter og fortoldningsgebyrer er forudbetalt og opkrævet af fragtføreren på vegne af importøren.",
-        // DK Compliance
-        fromVatId: "DK12345678",
-        fromRegNo: "CVR 12345678",
-        fromDirector: "Lars Nielsen",
-        toVatId: "DK87654321",
-        toRegNo: "CVR 87654321",
         bankName: "Danske Bank",
         bankAccountHolder: "Atlas Software ApS",
-        bankIban: "DK45 3000 1234 5678 90",
-        bankBic: "DANSKDK22XXX"
+        customerServicePhone: "+45 70 55 55 55"
       };
     case "it":
       return {
         title: "Fattura",
-        fromName: "Atlas Software S.r.l.",
-        fromEmail: "billing@atlas-software.example",
-        fromAddress: "New York / USA",
-        fromWebsite: "www.atlas-software.example",
-        fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness S.r.l.",
         toEmail: "john@abcfitness.com",
         toAddress: "Milano, Italia",
         notes: "Grazie per la vostra collaborazione.",
-        terms: "Pagamento entro 30 giorni data fattura.",
         currency: "EUR",
         footerNote: "*Tutti i dazi d'importazione, le imposte e le spese di sdoganamento sono stati prepagati e riscossi dal vettore per conto dell'importatore.",
-        // IT Compliance
-        fromVatId: "IT12345678901",
-        fromRegNo: "12345678901",
-        fromTaxOffice: "Agenzia delle Entrate",
-        fromDirector: "Dr. Rossi",
-        toVatId: "IT98765432109",
-        toRegNo: "98765432109",
         bankName: "UniCredit",
         bankAccountHolder: "Atlas Software S.r.l.",
-        bankIban: "IT99 C123 4567 8901 2345 6789 012",
-        bankBic: "UNCRITM1XXX"
+        customerServicePhone: "+39 02 555555"
       };
     case "pt":
       return {
         title: "Fatura",
-        fromName: "Atlas Software Lda",
-        fromEmail: "billing@atlas-software.example",
-        fromAddress: "New York / EUA",
-        fromWebsite: "www.atlas-software.example",
-        fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness Lda",
         toEmail: "john@abcfitness.com",
         toAddress: "Lisboa, Portugal",
         notes: "Agradecemos a sua preferência.",
-        terms: "Pagamento até 30 dias após a data da fatura.",
         currency: "EUR",
         footerNote: "*Todos os direitos de importação, impostos e taxas de desalfandegamento foram pré-pagos e cobrados pelo transportador em nome do importador.",
-        // PT Compliance
-        fromVatId: "PT509876543",
-        fromRegNo: "509876543",
-        fromDirector: "Manuel Silva",
-        toVatId: "PT512345678",
-        toRegNo: "512345678",
         bankName: "Banco BPI",
         bankAccountHolder: "Atlas Software Lda",
-        bankIban: "PT50 0010 0000 1234 5678 9012 3",
-        bankBic: "BPIOPTPLXXX"
+        customerServicePhone: "+351 21 555555"
       };
     case "en":
     default:
       return {
         title: "Invoice",
-        fromName: "Atlas Software Ltd",
-        fromEmail: "billing@atlas-software.example",
-        fromAddress: "New York / USA",
-        fromWebsite: "www.atlas-software.example",
-        fromPhone: "+90 555 555 55 55",
         toName: "ABC Fitness LLC",
         toEmail: "john@abcfitness.com",
         toAddress: "Miami, Florida",
         notes: "Thank you for your business.",
-        terms: "Payment due within 30 days.",
         currency: "USD",
         footerNote: "*All import duties, taxes, and clearance fees have been prepaid and collected by the carrier on behalf of the importer.",
-        // EN Compliance
-        fromVatId: "GB987654321",
-        fromRegNo: "09876543",
-        fromDirector: "John Doe",
-        toVatId: "US1234567",
-        toRegNo: "",
         bankName: "HSBC Bank",
         bankAccountHolder: "Atlas Software Ltd",
-        bankIban: "GB29 HSBC 4005 1512 3456 78",
-        bankBic: "HSBCHGB22XXX"
+        customerServicePhone: "+1 800 777 5706"
       };
   }
 };
 
 export default function App() {
+  const [activeTool, setActiveTool] = useState(null);
   const [lang, setLang] = useState("tr");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   // Responsive Scale Calculations for A4 Live Preview
   const [scale, setScale] = useState(1);
   const containerRef = useRef(null);
   const scaleWrapperRef = useRef(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth;
-        const padding = window.innerWidth <= 640 ? 24 : 32;
-        if (containerWidth < 794 + padding) {
-          setScale((containerWidth - padding) / 794);
-        } else {
-          setScale(1);
-        }
-      }
+    const container = containerRef.current;
+    if (!container) return undefined;
+
+    const fitPreview = () => {
+      const styles = window.getComputedStyle(container);
+      const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const availableWidth = Math.max(1, container.clientWidth - horizontalPadding);
+      setScale(Math.min(1, Math.max(0.25, availableWidth / 794)));
     };
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    fitPreview();
+    const resizeObserver = new ResizeObserver(fitPreview);
+    resizeObserver.observe(container);
+    window.addEventListener("resize", fitPreview);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", fitPreview);
+    };
+  }, [activeTool]);
 
   // Saved Invoices from LocalStorage
   const [savedInvoices, setSavedInvoices] = useState(() => {
@@ -284,37 +198,20 @@ export default function App() {
   const defaults = getLanguageDefaults("tr");
   const [invoiceData, setInvoiceData] = useState({
     id: "initial-id",
-    template: "classic",
+    visualTheme: "modern",
     paperTexture: false,
+    paperStrength: "soft",
     title: defaults.title,
     logo: null,
     invoiceNumber: "INV-2026-001",
-    invoiceDate: new Date().toISOString().split("T")[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    paymentTerms: "30",
-    fromName: defaults.fromName,
-    fromEmail: defaults.fromEmail,
-    fromAddress: defaults.fromAddress,
-    fromWebsite: defaults.fromWebsite,
-    fromPhone: defaults.fromPhone,
-    // Compliance values
-    fromVatId: defaults.fromVatId,
-    fromRegNo: defaults.fromRegNo,
-    fromTaxOffice: defaults.fromTaxOffice,
-    fromMersis: defaults.fromMersis,
-    fromJurisdiction: "",
-    fromDirector: "",
+    invoiceDate: INITIAL_INVOICE_DATE,
     toName: defaults.toName,
     toEmail: defaults.toEmail,
     toAddress: defaults.toAddress,
-    toVatId: defaults.toVatId,
-    toRegNo: defaults.toRegNo,
     items: [
       { description: "WordPress Recovery Service", quantity: 1, rate: 500 }
     ],
     notes: defaults.notes,
-    terms: defaults.terms,
-    signature: null,
     currency: defaults.currency,
     discount: 0,
     discountType: "percent",
@@ -324,22 +221,15 @@ export default function App() {
     clearanceFee: 0,
     amountPaid: 300,
     isPaid: false,
-    // Stripe settings
-    acceptStripe: false,
-    stripeEmail: "",
-    stripeLink: "",
-    // Bank details
     bankName: defaults.bankName,
     bankAccountHolder: defaults.bankAccountHolder,
-    bankIban: defaults.bankIban,
-    bankBic: defaults.bankBic,
     // Shipping template fields
     shippingCarrier: "UPS WORLDWIDE EXPRESS",
     shippingName: "",
     shippingAddress: "",
     cardBrand: "VISA",
     cardLast4: "1550",
-    customerServicePhone: "",
+    customerServicePhone: defaults.customerServicePhone,
     bankAccountNumber: "028 009 592",
     footerNote: defaults.footerNote
   });
@@ -361,45 +251,23 @@ export default function App() {
     setInvoiceData((prev) => {
       const prevDefaults = getLanguageDefaults(lang);
       
-      const updateIfDefault = (field, currentVal, prevDef, newDef) => {
+      const updateIfDefault = (currentVal, prevDef, newDef) => {
         return currentVal === prevDef ? newDef : currentVal;
       };
 
-      // Reset Stripe settings if shifting to Turkey since Stripe is disabled in TR
-      const acceptStripeVal = newLang === "tr" ? false : prev.acceptStripe;
-
       return {
         ...prev,
-        title: updateIfDefault("title", prev.title, prevDefaults.title, newDefaults.title),
-        fromName: updateIfDefault("fromName", prev.fromName, prevDefaults.fromName, newDefaults.fromName),
-        fromEmail: updateIfDefault("fromEmail", prev.fromEmail, prevDefaults.fromEmail, newDefaults.fromEmail),
-        fromAddress: updateIfDefault("fromAddress", prev.fromAddress, prevDefaults.fromAddress, newDefaults.fromAddress),
-        fromWebsite: updateIfDefault("fromWebsite", prev.fromWebsite, prevDefaults.fromWebsite, newDefaults.fromWebsite),
-        fromPhone: updateIfDefault("fromPhone", prev.fromPhone, prevDefaults.fromPhone, newDefaults.fromPhone),
-        // Legal compliance updates
-        fromVatId: updateIfDefault("fromVatId", prev.fromVatId, prevDefaults.fromVatId, newDefaults.fromVatId),
-        fromRegNo: updateIfDefault("fromRegNo", prev.fromRegNo, prevDefaults.fromRegNo, newDefaults.fromRegNo),
-        fromTaxOffice: updateIfDefault("fromTaxOffice", prev.fromTaxOffice, prevDefaults.fromTaxOffice, newDefaults.fromTaxOffice),
-        fromMersis: updateIfDefault("fromMersis", prev.fromMersis, prevDefaults.fromMersis, newDefaults.fromMersis),
-        fromJurisdiction: updateIfDefault("fromJurisdiction", prev.fromJurisdiction, prevDefaults.fromJurisdiction || "", newDefaults.fromJurisdiction || ""),
+        title: updateIfDefault(prev.title, prevDefaults.title, newDefaults.title),
+        toName: updateIfDefault(prev.toName, prevDefaults.toName, newDefaults.toName),
+        toEmail: updateIfDefault(prev.toEmail, prevDefaults.toEmail, newDefaults.toEmail),
+        toAddress: updateIfDefault(prev.toAddress, prevDefaults.toAddress, newDefaults.toAddress),
+        notes: updateIfDefault(prev.notes, prevDefaults.notes, newDefaults.notes),
+        currency: updateIfDefault(prev.currency, prevDefaults.currency, newDefaults.currency),
+        footerNote: updateIfDefault(prev.footerNote, prevDefaults.footerNote, newDefaults.footerNote),
         
-        toName: updateIfDefault("toName", prev.toName, prevDefaults.toName, newDefaults.toName),
-        toEmail: updateIfDefault("toEmail", prev.toEmail, prevDefaults.toEmail, newDefaults.toEmail),
-        toAddress: updateIfDefault("toAddress", prev.toAddress, prevDefaults.toAddress, newDefaults.toAddress),
-        toVatId: updateIfDefault("toVatId", prev.toVatId, prevDefaults.toVatId, newDefaults.toVatId),
-        toRegNo: updateIfDefault("toRegNo", prev.toRegNo, prevDefaults.toRegNo || "", newDefaults.toRegNo || ""),
-        
-        notes: updateIfDefault("notes", prev.notes, prevDefaults.notes, newDefaults.notes),
-        terms: updateIfDefault("terms", prev.terms, prevDefaults.terms, newDefaults.terms),
-        currency: updateIfDefault("currency", prev.currency, prevDefaults.currency, newDefaults.currency),
-        footerNote: updateIfDefault("footerNote", prev.footerNote, prevDefaults.footerNote, newDefaults.footerNote),
-        
-        // Bank details updates
-        bankName: updateIfDefault("bankName", prev.bankName, prevDefaults.bankName || "", newDefaults.bankName || ""),
-        bankAccountHolder: updateIfDefault("bankAccountHolder", prev.bankAccountHolder, prevDefaults.bankAccountHolder || "", newDefaults.bankAccountHolder || ""),
-        bankIban: updateIfDefault("bankIban", prev.bankIban, prevDefaults.bankIban || "", newDefaults.bankIban || ""),
-        
-        acceptStripe: acceptStripeVal
+        bankName: updateIfDefault(prev.bankName, prevDefaults.bankName || "", newDefaults.bankName || ""),
+        bankAccountHolder: updateIfDefault(prev.bankAccountHolder, prevDefaults.bankAccountHolder || "", newDefaults.bankAccountHolder || ""),
+        customerServicePhone: updateIfDefault(prev.customerServicePhone, prevDefaults.customerServicePhone, newDefaults.customerServicePhone)
       };
     });
   };
@@ -442,36 +310,20 @@ export default function App() {
     const defaults = getLanguageDefaults("tr");
     setInvoiceData({
       id: Date.now().toString(),
-      template: invoiceData.template || "classic",
-      paperTexture: Boolean(invoiceData.paperTexture),
+      visualTheme: invoiceData.visualTheme || "modern",
+      paperTexture: false,
+      paperStrength: invoiceData.paperStrength || "soft",
       title: defaults.title,
       logo: null,
       invoiceNumber: "INV-" + new Date().getFullYear() + "-" + String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
       invoiceDate: new Date().toISOString().split("T")[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      paymentTerms: "30",
-      fromName: defaults.fromName,
-      fromEmail: defaults.fromEmail,
-      fromAddress: defaults.fromAddress,
-      fromWebsite: defaults.fromWebsite,
-      fromPhone: defaults.fromPhone,
-      fromVatId: defaults.fromVatId,
-      fromRegNo: defaults.fromRegNo,
-      fromTaxOffice: defaults.fromTaxOffice,
-      fromMersis: defaults.fromMersis,
-      fromJurisdiction: "",
-      fromDirector: "",
       toName: defaults.toName,
       toEmail: defaults.toEmail,
       toAddress: defaults.toAddress,
-      toVatId: defaults.toVatId,
-      toRegNo: defaults.toRegNo,
       items: [
         { description: "WordPress Recovery Service", quantity: 1, rate: 500 }
       ],
       notes: defaults.notes,
-      terms: defaults.terms,
-      signature: null,
       currency: defaults.currency,
       discount: 0,
       discountType: "percent",
@@ -481,19 +333,14 @@ export default function App() {
       clearanceFee: 0,
       amountPaid: 300,
       isPaid: false,
-      acceptStripe: false,
-      stripeEmail: "",
-      stripeLink: "",
       bankName: defaults.bankName,
       bankAccountHolder: defaults.bankAccountHolder,
-      bankIban: defaults.bankIban,
-      bankBic: defaults.bankBic,
       shippingCarrier: invoiceData.shippingCarrier || "UPS WORLDWIDE EXPRESS",
       shippingName: "",
       shippingAddress: "",
       cardBrand: invoiceData.cardBrand || "",
       cardLast4: "",
-      customerServicePhone: invoiceData.customerServicePhone || "",
+      customerServicePhone: invoiceData.customerServicePhone || defaults.customerServicePhone,
       bankAccountNumber: invoiceData.bankAccountNumber || "028 009 592",
       footerNote: defaults.footerNote
     });
@@ -533,6 +380,15 @@ export default function App() {
       const exportSheet = element.cloneNode(true);
       exportSheet.id = "invoice-export-sheet";
       exportSheet.classList.add("pdf-export-mode");
+      Object.assign(exportSheet.style, {
+        width: "794px",
+        height: "1123px",
+        minWidth: "794px",
+        minHeight: "1123px",
+        maxWidth: "none",
+        transform: "none",
+        transformOrigin: "top left"
+      });
       preserveCanvasSpaces(exportSheet);
       exportHost.appendChild(exportSheet);
       document.body.appendChild(exportHost);
@@ -549,10 +405,6 @@ export default function App() {
         useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
-        width: 794,
-        height: 1123,
-        windowWidth: 794,
-        windowHeight: 1123,
         scrollX: 0,
         scrollY: 0,
         onclone: async (doc) => {
@@ -592,22 +444,25 @@ export default function App() {
     }
   };
 
-  // Handle successful simulated card payment
-  const handlePaymentSuccess = () => {
-    setInvoiceData((prev) => ({
-      ...prev,
-      isPaid: true,
-      amountPaid: calculateTotals(prev).total
-    }));
-  };
+  if (!activeTool) {
+    return <ToolLauncher onSelect={setActiveTool} />;
+  }
+
+  if (activeTool === "slip") {
+    return <MarketSlipApp onBack={() => setActiveTool(null)} />;
+  }
 
   return (
     <div className="app-container">
       {/* Header controls */}
       <header className="app-header">
         <div className="brand-section">
+          <button type="button" className="workspace-back-btn" onClick={() => setActiveTool(null)} aria-label="Araç menüsüne dön">
+            <ArrowLeft size={17} />
+            <span>Menü</span>
+          </button>
           <Receipt className="brand-icon" size={28} />
-          <h1 className="brand-title">Smart Invoice</h1>
+          <h1 className="brand-title">Fatura oluşturucu</h1>
         </div>
         
         <div className="header-controls">
@@ -660,6 +515,11 @@ export default function App() {
             <Download size={18} />
             {isGenerating ? "..." : uiT.downloadPdf}
           </button>
+
+          <button type="button" className="btn-secondary" onClick={() => window.print()}>
+            <Printer size={17} />
+            <span>Yazdır</span>
+          </button>
         </div>
       </header>
 
@@ -691,7 +551,6 @@ export default function App() {
               invoiceData={invoiceData}
               onChange={setInvoiceData}
               t={uiT}
-              lang={lang}
             />
           ) : (
             <div className="editor-pane">
@@ -773,22 +632,11 @@ export default function App() {
             <InvoicePreview
               invoiceData={invoiceData}
               t={pdfT}
-              onPayClick={() => setShowCheckoutModal(true)}
               lang={lang}
             />
           </div>
         </div>
       </main>
-
-      {/* Stripe Checkout Simulation Modal */}
-      {showCheckoutModal && (
-        <StripeCheckout
-          invoiceData={invoiceData}
-          onClose={() => setShowCheckoutModal(false)}
-          onPaymentSuccess={handlePaymentSuccess}
-          t={pdfT}
-        />
-      )}
     </div>
   );
 }
